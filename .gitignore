@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# 機密データ（bluetooth-positioning-system-data で管理）
+../bluetooth-positioning-system-data/credentials/
