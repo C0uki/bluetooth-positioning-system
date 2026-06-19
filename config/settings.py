@@ -25,7 +25,7 @@ RSSI_THRESHOLD = None
 # 送信先 API（管理用Vercel）
 # -----------------------------------------------
 
-API_ENDPOINT = ""
+API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = ""
 API_TIMEOUT_SECONDS = 10
 
