@@ -13,7 +13,7 @@ from config.settings import (
     BOOTH_ID,
     OPERATOR_ID,
     API_ENDPOINT,
-    API_AUTH_TOKEN,
+    BLUETOOTH_SECRET,
     API_TIMEOUT_SECONDS,
     LOG_DIR,
 )
@@ -22,9 +22,6 @@ from config.settings import (
 def upload(mac_addresses: list[str]) -> bool:
     """
     スキャン結果を Vercel API へ POST する
-
-    Args:
-        mac_addresses: 重複排除済みの MAC アドレスリスト
 
     Returns:
         bool: 送信成功なら True、失敗なら False
@@ -38,7 +35,7 @@ def upload(mac_addresses: list[str]) -> bool:
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_AUTH_TOKEN}",
+        "Authorization": f"Bearer {BLUETOOTH_SECRET}",
     }
 
     now_display = datetime.now().strftime("%y/%m/%d/%H:%M:%S")
@@ -61,7 +58,6 @@ def upload(mac_addresses: list[str]) -> bool:
 
 
 def _save_local(payload: dict, now_display: str) -> None:
-    """送信失敗時にローカルへ保存（フェイルオーバー用ログ）"""
     Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
     log_path = Path(LOG_DIR) / f"scan_{datetime.now().strftime('%Y%m%d')}.json"
 
