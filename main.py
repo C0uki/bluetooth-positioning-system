@@ -1,6 +1,6 @@
 """
 main.py
-Bluetooth Positioning System - エントリーポイント（v5対応）
+ISFプロジェクト - エントリーポイント（v5対応）
 
 役割：Bluetoothスキャン → RSSIログ記録 → 重複排除 → 管理用Vercel API への送信
 ※ 混雑レベルの計算はサーバー側（Vercel API Route）で実行されます。
@@ -56,7 +56,7 @@ async def _run_scan():
 def _show_status():
     print(f"\033[2J\033[H", end="")
     print(f"══════════════════════════════════════════")
-    print(f"  Bluetooth Positioning System (v5)")
+    print(f"  ISFプロジェクト (v5)")
     print(f"  ブース: {BOOTH_ID}")
     print(f"══════════════════════════════════════════")
     print()
