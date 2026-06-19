@@ -23,7 +23,7 @@ SCAN_INTERVAL_SECONDS = 90
 SCAN_DURATION_SECONDS = 10
 RSSI_THRESHOLD = None
 
-API_ENDPOINT = ""
+API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
 
