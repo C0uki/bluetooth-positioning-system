@@ -27,7 +27,7 @@ API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
 
-LOG_DIR = "logs"
+LOG_DIR = "../bluetooth-positioning-system-data/logs"
 
 LOCAL_PREVIEW_BASELINE_MAX = 20
 LOCAL_PREVIEW_SWITCH_TIME = "09:30"

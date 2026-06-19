@@ -44,10 +44,10 @@ Surface（各教室・1台固定）
 
 ```json
 {
-  "boothId": "class1-1",
+  "boothId": "class-1-1",
   "deviceCount": 18,
   "macAddresses": ["AA:BB:CC:DD:EE:01", "AA:BB:CC:DD:EE:02"],
-  "operatorId": "bt-class1-1"
+  "operatorId": "bt-class-1-1"
 }
 ```
 
@@ -112,10 +112,8 @@ API への送信が失敗した場合：
 
 ## ローカル動作確認について
 
-`processor/congestion_calculator.py` は本番では使用されませんが、
-Surface単体でのテスト時に「想定される混雑レベル」をコンソールに表示します。
-このロジックは Shoki への実装仕様としてそのまま使用できます
-（企画書v5 §8.4「C-3 ハイブリッド型」準拠）。
+`processor/congestion_calculator.py` は本番では使用しません。
+混雑レベルの判定ロジック（C-3 ハイブリッド型）の参考実装として残しています。
 
 ---
 
