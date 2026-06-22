@@ -7,7 +7,7 @@
 # このSurface の識別情報（教室ごとに異なる）
 # -----------------------------------------------
 
-BOOTH_ID = "class-1-1"
+BOOTH_ID = "class1-1"
 OPERATOR_ID = f"bt-{BOOTH_ID}"
 END_TIME = "16:00"
 
@@ -15,7 +15,7 @@ END_TIME = "16:00"
 # Bluetooth スキャン設定
 # -----------------------------------------------
 
-SCAN_INTERVAL_SECONDS = 90
+SCAN_INTERVAL_SECONDS = 60
 SCAN_DURATION_SECONDS = 10
 
 # RSSIフィルタリング閾値（朝テストで実測して設定。Noneならフィルタ無効）
@@ -33,7 +33,7 @@ API_TIMEOUT_SECONDS = 10
 # ログ設定
 # -----------------------------------------------
 
-LOG_DIR = "../bluetooth-positioning-system-data/logs"
+LOG_DIR = "logs"
 
 # -----------------------------------------------
 # ローカル動作確認用設定（本番送信では使用しない）

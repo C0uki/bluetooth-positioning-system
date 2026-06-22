@@ -16,7 +16,8 @@ from scanner.bluetooth_scanner import scan_devices, get_filtered_macs
 from processor.mac_deduplicator import deduplicate
 from logger.rssi_logger import log_rssi
 from uploader.api_uploader import upload
-from config.settings import SCAN_INTERVAL_SECONDS, BOOTH_ID, OPERATOR_ID, END_TIME, LOG_DIR
+import config.settings as settings
+from config.settings import BOOTH_ID, OPERATOR_ID, END_TIME, LOG_DIR
 
 
 def _now() -> str:
@@ -49,33 +50,32 @@ async def _run_scan():
             _last_status = "⚠️ 直前の送信に失敗しました（次回リトライします）"
 
     except Exception as e:
-        _last_status = f"⚠️ エラー発生（次回リトライします）"
+        _last_status = "⚠️ エラー発生（次回リトライします）"
         print(f"[{_now()}] エラー: {e}")
 
 
 def _show_status():
-    print(f"\033[2J\033[H", end="")
-    print(f"══════════════════════════════════════════")
+    print("\033[2J\033[H", end="")
+    print("══════════════════════════════════════════")
     print(f"  ISFプロジェクト (v5)")
     print(f"  ブース: {BOOTH_ID}")
-    print(f"══════════════════════════════════════════")
+    print("══════════════════════════════════════════")
     print()
 
     if _past_end_time():
         print(f"  終了時刻（{END_TIME}）になりました。")
-        print(f"  このウィンドウを閉じてください。")
+        print("  このウィンドウを閉じてください。")
     else:
         print(f"  状態: {_last_status}")
         print(f"  最終送信: {_last_send_time}")
-        print(f"  送信間隔: {SCAN_INTERVAL_SECONDS}秒")
+        print(f"  送信間隔: {settings.SCAN_INTERVAL_SECONDS}秒")
         print()
-        print(f"  ⚠ このウィンドウは閉じないでください")
+        print("  ⚠ このウィンドウは閉じないでください")
 
-    print(f"══════════════════════════════════════════")
+    print("══════════════════════════════════════════")
 
 
 def _copy_logs_to_usb():
-    """終了後、ログをUSBドライブにコピーしてローカルから削除する"""
     log_path = Path(LOG_DIR)
     if not log_path.exists() or not any(log_path.iterdir()):
         print("ログファイルがありません。")
@@ -107,13 +107,31 @@ def _copy_logs_to_usb():
     print("ローカルのログを削除しました。")
 
 
+def _input_token():
+    if settings.BLUETOOTH_SECRET:
+        return
+    import subprocess
+    result = subprocess.run(
+        ["powershell", "-Command",
+         'Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox("APIトークンを入力してください", "ISFプロジェクト")'],
+        capture_output=True, text=True
+    )
+    token = result.stdout.strip() if result.returncode == 0 else ""
+    if not token:
+        print("トークンが入力されませんでした。終了します。")
+        raise SystemExit(1)
+    settings.BLUETOOTH_SECRET = token
+    print("トークンを設定しました。\n")
+
+
 def main():
+    _input_token()
     _show_status()
     asyncio.run(_run_scan())
     _show_status()
 
     while not _past_end_time():
-        time.sleep(SCAN_INTERVAL_SECONDS)
+        time.sleep(settings.SCAN_INTERVAL_SECONDS)
         asyncio.run(_run_scan())
         _show_status()
 

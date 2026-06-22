@@ -9,11 +9,11 @@ import requests
 from datetime import datetime
 from pathlib import Path
 
+import config.settings as settings
 from config.settings import (
     BOOTH_ID,
     OPERATOR_ID,
     API_ENDPOINT,
-    BLUETOOTH_SECRET,
     API_TIMEOUT_SECONDS,
     LOG_DIR,
 )
@@ -35,7 +35,7 @@ def upload(mac_addresses: list[str]) -> bool:
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {BLUETOOTH_SECRET}",
+        "Authorization": f"Bearer {settings.BLUETOOTH_SECRET}",
     }
 
     now_display = datetime.now().strftime("%y/%m/%d/%H:%M:%S")
