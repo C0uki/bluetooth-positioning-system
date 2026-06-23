@@ -62,7 +62,7 @@ def upload_rssi(scan_results: list[dict]) -> None:
             "booth_id": settings.BOOTH_ID,
             "date": date_str,
             "timestamp": timestamp,
-            "mac_address": result["mac"],
+            "mac_hash": result["mac_hash"],
             "rssi": result["rssi"],
             "passed_filter": result["passed_filter"],
         })
@@ -79,7 +79,7 @@ def _send_records(records: list[dict], date_str: str) -> None:
     for record in records:
         ref.push({
             "timestamp": record["timestamp"],
-            "mac_address": record["mac_address"],
+            "mac_hash": record["mac_hash"],
             "rssi": record["rssi"],
             "passed_filter": record["passed_filter"],
         })
