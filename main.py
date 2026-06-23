@@ -16,6 +16,7 @@ from scanner.bluetooth_scanner import scan_devices, get_filtered_macs
 from processor.mac_deduplicator import deduplicate
 from logger.rssi_logger import log_rssi
 from uploader.api_uploader import upload
+from uploader.rtdb_uploader import upload_rssi
 import config.settings as settings
 from config.settings import BOOTH_ID, OPERATOR_ID, END_TIME, LOG_DIR
 
@@ -39,6 +40,10 @@ async def _run_scan():
     try:
         raw_results = await scan_devices()
         log_rssi(raw_results)
+        try:
+            upload_rssi(raw_results)
+        except Exception as e:
+            print(f"[{_now()}] RTDB送信エラー（無視して続行）: {e}")
         filtered_macs = get_filtered_macs(raw_results)
         unique_macs = deduplicate(filtered_macs)
         success = upload(unique_macs)

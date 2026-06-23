@@ -3,26 +3,34 @@ tools/generate_configs.py
 教室ごとの配布用パッケージを一括生成するスクリプト
 
 使い方:
-  python tools/generate_configs.py --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt
+  python tools/generate_configs.py \
+    --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt \
+    --firebase-key-file ../bluetooth-positioning-system-data/credentials/firebase_key.json \
+    --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv
 
 生成される構成:
   dist/
-    class-1-1/
+    class1-1/
       main.py, start.bat, install.bat, requirements.txt
       config/settings.py（教室固有）
       scanner/, processor/, uploader/, logger/
-    class-1-2/
+    class1-2/
       ...
 """
 
 import argparse
+import csv
 import shutil
 from pathlib import Path
 
-CLASSROOMS = []
-for grade in range(1, 4):
-    for cls in range(1, 5):
-        CLASSROOMS.append(f"class{grade}-{cls}")
+BOOTH_IDS = [
+    "class1-1", "class1-2", "class1-3", "class1-4",
+    "class2-1", "class2-2", "class2-3", "class2-4",
+    "class3-1", "class3-2", "class3-3", "class3-4",
+    "club-art", "club-game",
+    "eat-1", "eat-2", "eat-3", "eat-4",
+    "health", "pe-gym",
+]
 
 SETTINGS_TEMPLATE = '''\
 BOOTH_ID = "{booth_id}"
@@ -31,7 +39,9 @@ END_TIME = "16:00"
 
 SCAN_INTERVAL_SECONDS = 60
 SCAN_DURATION_SECONDS = 10
-RSSI_THRESHOLD = None
+RSSI_THRESHOLD = {rssi_threshold}
+
+FIREBASE_DATABASE_URL = "{firebase_database_url}"
 
 API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = "{token}"
@@ -66,19 +76,38 @@ COPY_ITEMS = [
 def main():
     parser = argparse.ArgumentParser(description="教室ごとの配布用パッケージを一括生成")
     parser.add_argument("--token-file", required=True, help="APIトークンファイルのパス")
+    parser.add_argument("--firebase-key-file", default=None, help="Firebaseサービスアカウントキーのパス")
+    parser.add_argument("--rssi-csv", default=None, help="RSSI閾値CSVのパス")
     parser.add_argument("--output-dir", default="dist", help="出力先ディレクトリ（デフォルト: dist）")
     parser.add_argument("--extra", nargs="*", default=[], help="追加の教室ID（例: club-art eat-car-1）")
     args = parser.parse_args()
 
     token = Path(args.token_file).read_text(encoding="utf-8").strip()
-    classrooms = CLASSROOMS + args.extra
+    booth_ids = BOOTH_IDS + args.extra
     output_dir = Path(args.output_dir)
     project_root = Path(__file__).resolve().parent.parent
+
+    rssi_thresholds = {}
+    if args.rssi_csv:
+        with open(args.rssi_csv, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                bid = row["booth_id"].strip()
+                val = row["rssi_threshold"].strip() if row.get("rssi_threshold") else ""
+                if val and val.lower() != "none":
+                    rssi_thresholds[bid] = int(val)
+
+    firebase_database_url = ""
+    if args.firebase_key_file:
+        import json
+        key_data = json.loads(Path(args.firebase_key_file).read_text(encoding="utf-8"))
+        project_id = key_data["project_id"]
+        firebase_database_url = f"https://{project_id}-default-rtdb.asia-southeast1.firebasedatabase.app"
 
     if output_dir.exists():
         shutil.rmtree(output_dir)
 
-    for booth_id in classrooms:
+    for booth_id in booth_ids:
         dest = output_dir / booth_id
 
         for item in COPY_ITEMS:
@@ -89,12 +118,25 @@ def main():
                 dest.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dest / item)
 
+        if args.firebase_key_file:
+            cred_dir = dest / "credentials"
+            cred_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(args.firebase_key_file, cred_dir / "firebase_key.json")
+
+        threshold = rssi_thresholds.get(booth_id)
+        rssi_value = str(threshold) if threshold is not None else "None"
+
         config_dir = dest / "config"
         config_dir.mkdir(parents=True, exist_ok=True)
-        settings = SETTINGS_TEMPLATE.format(booth_id=booth_id, token=token)
+        settings = SETTINGS_TEMPLATE.format(
+            booth_id=booth_id,
+            token=token,
+            rssi_threshold=rssi_value,
+            firebase_database_url=firebase_database_url,
+        )
         (config_dir / "settings.py").write_text(settings, encoding="utf-8")
 
-    print(f"{len(classrooms)} 教室分の配布パッケージを {output_dir} に生成しました。")
+    print(f"{len(booth_ids)} 教室分の配布パッケージを {output_dir} に生成しました。")
     print(f"各フォルダをUSBで各Surfaceにコピーしてください。")
 
 
