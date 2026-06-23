@@ -77,10 +77,13 @@ def _update_history(device_count: int) -> None:
 
 
 def _to_status(device_count: int, baseline: int) -> int:
-    if baseline == 0:
+    if baseline <= 0:
         return 1
-    ratio = (device_count / baseline) * 100
-    for status, (lower, upper) in LOCAL_PREVIEW_RATIOS.items():
-        if lower <= ratio <= upper:
+    # device_count/baseline*100 <= upper を整数比較で評価する。
+    # 浮動小数点だと「ちょうど55%」が 55.00000000000001 となり境界の
+    # 隙間に落ちて最大値(5)を返してしまうため、両辺を baseline 倍して比較する。
+    scaled = device_count * 100
+    for status, (_lower, upper) in LOCAL_PREVIEW_RATIOS.items():
+        if scaled <= upper * baseline:
             return status
     return 5
