@@ -20,6 +20,7 @@ tools/generate_configs.py
 
 import argparse
 import csv
+import secrets
 import shutil
 from pathlib import Path
 
@@ -40,6 +41,8 @@ END_TIME = "16:00"
 SCAN_INTERVAL_SECONDS = 60
 SCAN_DURATION_SECONDS = 10
 RSSI_THRESHOLD = {rssi_threshold}
+
+MAC_HASH_SALT = "{mac_salt}"
 
 FIREBASE_DATABASE_URL = "{firebase_database_url}"
 
@@ -78,11 +81,14 @@ def main():
     parser.add_argument("--token-file", required=True, help="APIトークンファイルのパス")
     parser.add_argument("--firebase-key-file", default=None, help="Firebaseサービスアカウントキーのパス")
     parser.add_argument("--rssi-csv", default=None, help="RSSI閾値CSVのパス")
+    parser.add_argument("--mac-salt", default=None,
+                        help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
     parser.add_argument("--output-dir", default="dist", help="出力先ディレクトリ（デフォルト: dist）")
     parser.add_argument("--extra", nargs="*", default=[], help="追加の教室ID（例: club-art eat-car-1）")
     args = parser.parse_args()
 
     token = Path(args.token_file).read_text(encoding="utf-8").strip()
+    mac_salt = args.mac_salt if args.mac_salt else secrets.token_hex(16)
     booth_ids = BOOTH_IDS + args.extra
     output_dir = Path(args.output_dir)
     project_root = Path(__file__).resolve().parent.parent
@@ -132,12 +138,18 @@ def main():
             booth_id=booth_id,
             token=token,
             rssi_threshold=rssi_value,
+            mac_salt=mac_salt,
             firebase_database_url=firebase_database_url,
         )
         (config_dir / "settings.py").write_text(settings, encoding="utf-8")
 
     print(f"{len(booth_ids)} 教室分の配布パッケージを {output_dir} に生成しました。")
     print(f"各フォルダをUSBで各Surfaceにコピーしてください。")
+    if not args.mac_salt:
+        print()
+        print(f"[重要] MAC_HASH_SALT = {mac_salt}")
+        print("       このソルトを必ず記録してください。再生成すると擬似IDが変わり、")
+        print("       過去に収集したデータと突合できなくなります。")
 
 
 if __name__ == "__main__":

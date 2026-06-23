@@ -63,8 +63,17 @@ def _save_local(payload: dict, now_display: str) -> None:
 
     logs = []
     if log_path.exists():
-        with open(log_path, "r", encoding="utf-8") as f:
-            logs = json.load(f)
+        try:
+            with open(log_path, "r", encoding="utf-8") as f:
+                logs = json.load(f)
+            if not isinstance(logs, list):
+                raise ValueError("ログJSONがリスト形式ではありません")
+        except (json.JSONDecodeError, ValueError, OSError) as e:
+            # 既存JSONが壊れていても以後の保存を止めないよう、退避して作り直す
+            backup = log_path.with_suffix(f".corrupt_{datetime.now().strftime('%H%M%S')}.json")
+            log_path.replace(backup)
+            logs = []
+            print(f"[{now_display}] 既存ログが破損のため退避: {backup}（{e}）")
 
     logs.append({**payload, "savedAt": now_display})
 

@@ -30,6 +30,6 @@ def log_rssi(scan_results: list[dict]) -> None:
     with open(log_path, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if write_header:
-            writer.writerow(["timestamp", "booth_id", "mac_address", "rssi", "passed_filter"])
+            writer.writerow(["timestamp", "booth_id", "mac_hash", "rssi", "passed_filter"])
         for r in scan_results:
-            writer.writerow([timestamp, BOOTH_ID, r["mac"], r["rssi"], r["passed_filter"]])
+            writer.writerow([timestamp, BOOTH_ID, r["mac_hash"], r["rssi"], r["passed_filter"]])

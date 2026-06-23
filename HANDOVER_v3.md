@@ -216,12 +216,15 @@ class-1-1/
 - **採用/見送りの最終判断期限: 2026年8月上旬**
 
 ### RSSI記録方針（将来の位置推定用）
-- CSVログに MACアドレス + RSSI値 を記録（`logger/rssi_logger.py`）
-- 形式: `timestamp, booth_id, mac_address, rssi, passed_filter`
+- CSVログに **ハッシュ化MAC（擬似ID）** + RSSI値 を記録（`logger/rssi_logger.py`）
+  - 生MACは保存・送信しない。`MAC_HASH_SALT` 付きSHA-256で擬似ID化（`scanner/bluetooth_scanner.py: hash_mac`）
+  - 同一端末は常に同じ擬似IDになるため、重複排除・将来の位置推定（擬似ID＋RSSIパターン）は維持される
+- 形式: `timestamp, booth_id, mac_hash, rssi, passed_filter`
 - 文化祭終了後、19台分のローカルログをUSBで回収しPrivateリポジトリに保管
 
 ### MACアドレスデータの保持・開示方針
 - 保持期間: 当面保持（秋以降の位置推定システム開発用の学習データ）
+  - 保存・送信するのは生MACではなくソルト付きハッシュの擬似IDのみ（個人端末の生識別子は保持しない）
 - 会場内に「Bluetoothによる混雑計測を実施しています」の掲示を出す（受付に1箇所）
 
 ---
