@@ -5,8 +5,11 @@ tools/generate_configs.py
 使い方:
   python tools/generate_configs.py \
     --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt \
-    --firebase-key-file ../bluetooth-positioning-system-data/credentials/firebase_key.json \
+    --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app \
     --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv
+
+  ※ RTDB へは認証なし write-only ルール経由で REST 送信するため、
+     サービスアカウントキーは配布しない（database.rules.json を参照）。
 
 生成される構成:
   dist/
@@ -79,7 +82,8 @@ COPY_ITEMS = [
 def main():
     parser = argparse.ArgumentParser(description="教室ごとの配布用パッケージを一括生成")
     parser.add_argument("--token-file", required=True, help="APIトークンファイルのパス")
-    parser.add_argument("--firebase-key-file", default=None, help="Firebaseサービスアカウントキーのパス")
+    parser.add_argument("--firebase-database-url", default="",
+                        help="RTDB の URL（例: https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app）。未指定なら RTDB 送信を無効化")
     parser.add_argument("--rssi-csv", default=None, help="RSSI閾値CSVのパス")
     parser.add_argument("--mac-salt", default=None,
                         help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
@@ -103,12 +107,7 @@ def main():
                 if val and val.lower() != "none":
                     rssi_thresholds[bid] = int(val)
 
-    firebase_database_url = ""
-    if args.firebase_key_file:
-        import json
-        key_data = json.loads(Path(args.firebase_key_file).read_text(encoding="utf-8"))
-        project_id = key_data["project_id"]
-        firebase_database_url = f"https://{project_id}-default-rtdb.asia-southeast1.firebasedatabase.app"
+    firebase_database_url = args.firebase_database_url.strip()
 
     if output_dir.exists():
         shutil.rmtree(output_dir)
@@ -123,11 +122,6 @@ def main():
             elif src.is_file():
                 dest.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dest / item)
-
-        if args.firebase_key_file:
-            cred_dir = dest / "credentials"
-            cred_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(args.firebase_key_file, cred_dir / "firebase_key.json")
 
         threshold = rssi_thresholds.get(booth_id)
         rssi_value = str(threshold) if threshold is not None else "None"

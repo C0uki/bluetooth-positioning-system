@@ -71,17 +71,47 @@ bluetooth-positioning-system/（Public）
 │   ├── mac_deduplicator.py  # MACアドレス重複排除
 │   └── congestion_calculator.py  # 【ローカル確認専用】参考実装
 ├── uploader/
-│   └── api_uploader.py      # Vercel API へPOST送信
+│   ├── api_uploader.py      # Vercel API へPOST送信（混雑カウント）
+│   └── rtdb_uploader.py     # RSSIログを RTDB へ REST送信（認証なしwrite-onlyルール経由）
 ├── logger/
-│   └── rssi_logger.py       # RSSI値をCSVでローカル記録
+│   └── rssi_logger.py       # RSSI値をCSVでローカル記録（バックアップ）
 └── tools/
     └── generate_configs.py  # 12教室分の配布パッケージ一括生成
 
 bluetooth-positioning-system-data/（Private）
 ├── credentials/
-│   └── api_token.txt        # APIトークン
-└── .gitignore               # credentials/, logs/ を除外
+│   └── api_token.txt        # APIトークン（配布用・追跡対象）
+├── database.rules.json      # RTDB セキュリティルール（要デプロイ）
+└── .gitignore               # credentials/, logs/ を除外（SA鍵はコミットしない）
 ```
+
+---
+
+## セキュリティ強化（Issue #17）
+
+機密情報の露出を減らすための対応。確定した設計と、コード外で必要な手作業を記す。
+
+### 確定した方針
+- **RSSI収集（RTDB）**: サービスアカウントキーの配布を廃止。**認証なし write-only
+  セキュリティルール**経由で REST 送信する（B1）。Surface／USB配布物に秘密情報を置かない。
+  - ルールは `rssi_logs/<date>/<booth>` への**新規追加のみ**許可（上書き・削除・読み取り不可）、
+    かつ**フィールド/型検証**（`timestamp`/`mac_hash`:string, `rssi`:number, `passed_filter`:bool、
+    想定外フィールド拒否）。
+  - ルール定義: data リポジトリ `database.rules.json`。
+  - コード: `uploader/rtdb_uploader.py`（firebase-admin廃止 → `requests` でREST）、
+    `requirements.txt` から `firebase-admin` 削除、`generate_configs.py` は
+    `--firebase-database-url` で URL を受け取る（SA鍵コピー廃止）。
+- **共有APIトークン**: サーバ検証が Shoki 依存のため、今回はコード変更せず**要件を明文化**
+  （data リポジトリ README）。
+
+### コード外の手作業（未対応・TODO）
+1. **RTDBルールをデプロイ**: `database.rules.json` を Firebase Console または
+   `firebase deploy --only database` で反映（これを行うまで write-only保護は効かない）。
+2. **APIトークンのローテーション**: 旧トークンは本ファイルの git 履歴に残り漏えい扱い。
+   Shoki に Vercel 環境変数の再生成を依頼し、`credentials/api_token.txt` を更新。
+3. **per-booth トークン＋token↔booth束縛**: Shoki にサーバ側実装を依頼（boothId不一致は403）。
+4. **旧SA鍵の失効**: Vercel が同一サービスアカウントを使っていないことを確認のうえ、
+   Firebase Console で旧鍵を失効。
 
 ---
 
@@ -90,9 +120,11 @@ bluetooth-positioning-system-data/（Private）
 ### API接続情報
 ```
 API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
-BLUETOOTH_SECRET = "73de08f1d9a92b9a74c43a96bc4af81e940d8e5c07e474792094635da21496c6"
+BLUETOOTH_SECRET = "<Privateリポジトリ credentials/api_token.txt を参照（ここには平文で書かない）>"
 認証方式: Authorization: Bearer <token>
 ```
+> ⚠️ このトークンは過去に本ファイル（Publicリポジトリ）へ平文で記載され git 履歴に
+> 残っているため、漏えい扱い。Shoki に Vercel 環境変数の再生成（ローテーション）を依頼すること。
 
 ### 動作フロー（確認済み）
 ```
@@ -185,7 +217,7 @@ Shoki:
 ## 本番Surfaceへの配布フロー
 
 1. Couki操作の1台でPublic/Privateリポジトリをclone
-2. `python tools/generate_configs.py --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt` で12教室分のパッケージを `dist/` に生成
+2. `python tools/generate_configs.py --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app` で12教室分のパッケージを `dist/` に生成（サービスアカウントキーは配布されない）
 3. USBメモリで19教室＋予備Surfaceにローカルコピー
 4. 各Surfaceで `install.bat`（初回のみ）→ `start.bat` で起動
 
@@ -216,11 +248,14 @@ class-1-1/
 - **採用/見送りの最終判断期限: 2026年8月上旬**
 
 ### RSSI記録方針（将来の位置推定用）
-- CSVログに **ハッシュ化MAC（擬似ID）** + RSSI値 を記録（`logger/rssi_logger.py`）
+- **収集はクラウド（RTDB）が主**: `uploader/rtdb_uploader.py` が
+  `rssi_logs/<date>/<booth>` へ認証なしwrite-onlyルール経由でREST送信（上記#17参照）。
+- **CSVはローカルのバックアップ**: `logger/rssi_logger.py` が同じ内容をCSVにも記録。
   - 生MACは保存・送信しない。`MAC_HASH_SALT` 付きSHA-256で擬似ID化（`scanner/bluetooth_scanner.py: hash_mac`）
   - 同一端末は常に同じ擬似IDになるため、重複排除・将来の位置推定（擬似ID＋RSSIパターン）は維持される
 - 形式: `timestamp, booth_id, mac_hash, rssi, passed_filter`
-- 文化祭終了後、19台分のローカルログをUSBで回収しPrivateリポジトリに保管
+- 収集済み RTDB データの読み出しは管理者がSA鍵でオフライン取得（鍵は配布せず開発機にのみ保管）。
+- USBでのCSV回収は予備手段（RTDB送信が不調だった端末の補完用）。
 
 ### MACアドレスデータの保持・開示方針
 - 保持期間: 当面保持（秋以降の位置推定システム開発用の学習データ）

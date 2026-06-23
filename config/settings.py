@@ -34,8 +34,10 @@ MAC_HASH_SALT = ""
 # 送信先 API（管理用Vercel）
 # -----------------------------------------------
 
-# ===== Firebase設定 =====
-FIREBASE_DATABASE_URL = ""  # generate_configs.py で埋め込む
+# ===== Firebase RTDB設定（RSSIログ収集） =====
+# 認証なし write-only ルール経由で REST 送信する（サービスアカウントキーは配布しない）。
+# 空ならRTDB送信を無効化。generate_configs.py が --firebase-database-url で埋め込む。
+FIREBASE_DATABASE_URL = ""
 
 API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = ""
