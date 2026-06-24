@@ -108,8 +108,13 @@ bluetooth-positioning-system-data/（Private）
 1. **RTDBルールをデプロイ**: `database.rules.json` を Firebase Console または
    `firebase deploy --only database` で反映（これを行うまで write-only保護は効かない）。
 2. **APIトークンのローテーション**: 旧トークンは本ファイルの git 履歴に残り漏えい扱い。
-   Shoki に Vercel 環境変数の再生成を依頼し、`credentials/api_token.txt` を更新。
-3. **per-booth トークン＋token↔booth束縛**: Shoki にサーバ側実装を依頼（boothId不一致は403）。
+   Shoki に Vercel 環境変数の再生成を依頼（下記3で per-booth 化すれば同時に解消）。
+3. **per-booth トークン＋token↔booth束縛**:
+   - 方式は **方式2（boothId→token のJSONマップを env var に置く）** で確定。
+   - Surface側は実装済み: `tools/generate_booth_tokens.py` でマップ生成 →
+     `generate_configs.py --token-map` で各Surfaceに自分のトークンのみ埋め込み。
+   - 残: Shoki がサーバ `/api/booth/bluetooth` で「boothId に紐づくトークンと一致しなければ403」を実装し、
+     同じJSONを env var `BLUETOOTH_SECRET` に設定。boothId は ASCII slug（`class1-1` 等）で全体統一。
 4. **旧SA鍵の失効**: Vercel が同一サービスアカウントを使っていないことを確認のうえ、
    Firebase Console で旧鍵を失効。
 
@@ -217,9 +222,10 @@ Shoki:
 ## 本番Surfaceへの配布フロー
 
 1. Couki操作の1台でPublic/Privateリポジトリをclone
-2. `python tools/generate_configs.py --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app` で12教室分のパッケージを `dist/` に生成（サービスアカウントキーは配布されない）
-3. USBメモリで19教室＋予備Surfaceにローカルコピー
-4. 各Surfaceで `install.bat`（初回のみ）→ `start.bat` で起動
+2. トークン生成（per-booth）: `python tools/generate_booth_tokens.py --output ../bluetooth-positioning-system-data/credentials/booth_tokens.json` → 同じJSONをサーバの env var `BLUETOOTH_SECRET` にも設定
+3. 配布生成: `python tools/generate_configs.py --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app` で全ブース分のパッケージを `dist/` に生成（SA鍵は配布されない／各Surfaceに自分のトークンのみ埋め込み）
+4. USBメモリで各教室＋予備Surfaceにローカルコピー
+5. 各Surfaceで `install.bat`（初回のみ）→ `start.bat` で起動
 
 ### 配布パッケージの構成（dist/class-1-1/ の例）
 ```
