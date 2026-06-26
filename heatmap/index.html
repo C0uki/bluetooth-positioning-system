@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISF 文化祭 混雑マップ</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Helvetica Neue", "Hiragino Sans", sans-serif; background: #0f172a; color: #fff; }
+
+.header {
+  text-align: center;
+  padding: 12px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+.header h1 { font-size: 1.2rem; font-weight: 600; }
+.header .updated { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+
+.map-container {
+  max-width: 900px;
+  margin: 16px auto;
+  padding: 0 8px;
+}
+.map-container svg {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.booth:hover {
+  filter: brightness(1.2);
+  cursor: pointer;
+}
+
+.tooltip {
+  display: none;
+  position: fixed;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  z-index: 100;
+  pointer-events: none;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.tooltip.show { display: block; }
+.tooltip .tt-name { font-weight: 700; font-size: 0.95rem; }
+.tooltip .tt-row { margin-top: 4px; color: #94a3b8; }
+.tooltip .tt-level { font-weight: 700; margin-top: 6px; font-size: 1rem; }
+
+.status-bar {
+  text-align: center;
+  padding: 8px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+.status-bar.error { color: #ef4444; }
+.status-bar.ok { color: #22c55e; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ISF 文化祭 混雑マップ</h1>
+  <div class="updated" id="updated"></div>
+</div>
+
+<div class="map-container" id="mapContainer"></div>
+
+<div class="status-bar" id="statusBar">読み込み中...</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-name" id="ttName"></div>
+  <div class="tt-row" id="ttFloor"></div>
+  <div class="tt-row" id="ttCount"></div>
+  <div class="tt-level" id="ttLevel"></div>
+</div>
+
+<script>
+const CONFIG = {
+  API_BASE: "",
+  API_ENDPOINT: "/api/booth/congestion",
+  REFRESH_INTERVAL_MS: 30000,
+};
+
+const LEVEL_COLORS = {
+  0: "#94A3B8",
+  1: "#2C7BB6",
+  2: "#ABD9E9",
+  3: "#FFFFBF",
+  4: "#FDAE61",
+  5: "#D7191C",
+};
+
+const LEVEL_LABELS = {
+  0: "データなし",
+  1: "非常に閑散",
+  2: "閑散",
+  3: "通常",
+  4: "混雑",
+  5: "非常に混雑",
+};
+
+const BOOTH_NAMES = {
+  "class1-1": "1の1", "class1-2": "1の2", "class1-3": "1の3", "class1-4": "1の4",
+  "class2-1": "2の1", "class2-2": "2の2", "class2-3": "2の3", "class2-4": "2の4",
+  "class3-1": "3の1", "class3-2": "3の2", "class3-3": "3の3", "class3-4": "3の4",
+  "club-esports": "eスポーツ部", "club-art": "美術部",
+  "eat-car-1": "キッチンカー1", "eat-car-2": "キッチンカー2", "eat-car-3": "キッチンカー3",
+  "pta-bazaar": "PTAバザー", "health": "保健室", "pe-gym": "体育館",
+};
+
+function deviceCountToLevel(count) {
+  if (count == null) return 0;
+  if (count <= 5)  return 1;
+  if (count <= 15) return 2;
+  if (count <= 30) return 3;
+  if (count <= 50) return 4;
+  return 5;
+}
+
+let boothData = {};
+
+async function loadSvg() {
+  const res = await fetch("floormap.svg");
+  const text = await res.text();
+  document.getElementById("mapContainer").innerHTML = text;
+
+  document.querySelectorAll(".booth").forEach(el => {
+    el.addEventListener("mouseenter", (e) => showTooltip(e, el.dataset.boothId));
+    el.addEventListener("mousemove", moveTooltip);
+    el.addEventListener("mouseleave", hideTooltip);
+    el.addEventListener("touchstart", (e) => { e.preventDefault(); showTooltip(e, el.dataset.boothId); });
+  });
+}
+
+function updateColors() {
+  document.querySelectorAll(".booth").forEach(el => {
+    const id = el.dataset.boothId;
+    const data = boothData[id];
+    const level = data != null ? deviceCountToLevel(data.deviceCount) : 0;
+    el.setAttribute("fill", LEVEL_COLORS[level]);
+    el.dataset.level = level;
+  });
+}
+
+function showTooltip(e, boothId) {
+  const tt = document.getElementById("tooltip");
+  const data = boothData[boothId];
+  const level = data != null ? deviceCountToLevel(data.deviceCount) : 0;
+
+  document.getElementById("ttName").textContent = BOOTH_NAMES[boothId] || boothId;
+  document.getElementById("ttFloor").textContent = `ID: ${boothId}`;
+  document.getElementById("ttCount").textContent = data != null ? `検知台数: ${data.deviceCount}` : "データなし";
+  document.getElementById("ttLevel").textContent = LEVEL_LABELS[level];
+  document.getElementById("ttLevel").style.color = LEVEL_COLORS[level];
+
+  tt.classList.add("show");
+  moveTooltip(e);
+}
+
+function moveTooltip(e) {
+  const tt = document.getElementById("tooltip");
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  tt.style.left = (x + 12) + "px";
+  tt.style.top = (y - 40) + "px";
+}
+
+function hideTooltip() {
+  document.getElementById("tooltip").classList.remove("show");
+}
+
+async function fetchCongestion() {
+  const statusBar = document.getElementById("statusBar");
+
+  if (!CONFIG.API_BASE) {
+    const boothIds = Object.keys(BOOTH_NAMES);
+    for (const id of boothIds) {
+      boothData[id] = { deviceCount: Math.floor(Math.random() * 60) };
+    }
+    statusBar.textContent = "デモモード（API未設定）";
+    statusBar.className = "status-bar";
+    document.getElementById("updated").textContent = `最終更新: ${new Date().toLocaleTimeString("ja-JP")}`;
+    updateColors();
+    return;
+  }
+
+  try {
+    const res = await fetch(CONFIG.API_BASE + CONFIG.API_ENDPOINT);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.booths) boothData = json.booths;
+    statusBar.textContent = "接続中";
+    statusBar.className = "status-bar ok";
+    document.getElementById("updated").textContent = `最終更新: ${new Date().toLocaleTimeString("ja-JP")}`;
+    updateColors();
+  } catch (e) {
+    statusBar.textContent = `取得エラー: ${e.message}`;
+    statusBar.className = "status-bar error";
+  }
+}
+
+async function init() {
+  await loadSvg();
+  await fetchCongestion();
+  setInterval(fetchCongestion, CONFIG.REFRESH_INTERVAL_MS);
+}
+
+init();
+</script>
+</body>
+</html>
