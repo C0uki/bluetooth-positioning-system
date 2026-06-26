@@ -6,112 +6,59 @@
 <title>ISF 文化祭 混雑マップ</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: "Helvetica Neue", "Hiragino Sans", sans-serif; background: #1a1a2e; color: #fff; }
+body { font-family: "Helvetica Neue", "Hiragino Sans", sans-serif; background: #0f172a; color: #fff; }
 
 .header {
   text-align: center;
   padding: 12px 16px;
-  background: #16213e;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
 }
 .header h1 { font-size: 1.2rem; font-weight: 600; }
-.header .updated { font-size: 0.75rem; color: #888; margin-top: 4px; }
+.header .updated { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
 
-.map-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 800px;
+.map-container {
+  max-width: 900px;
   margin: 16px auto;
   padding: 0 8px;
 }
-.map-wrapper img {
+.map-container svg {
   width: 100%;
   height: auto;
-  display: block;
   border-radius: 8px;
-  opacity: 0.35;
 }
 
-.booth-overlay {
-  position: absolute;
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.booth:hover {
+  filter: brightness(1.2);
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  border: 1.5px solid rgba(255,255,255,0.2);
-}
-.booth-overlay:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 16px rgba(255,255,255,0.3);
-  z-index: 10;
-}
-.booth-label {
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-  text-align: center;
-  line-height: 1.2;
-  pointer-events: none;
-}
-.booth-count {
-  font-size: 0.85rem;
-  font-weight: 800;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-  pointer-events: none;
-}
-
-.legend {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding: 8px 16px 16px;
-  flex-wrap: wrap;
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7rem;
-  color: #ccc;
-}
-.legend-color {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
 }
 
 .tooltip {
   display: none;
   position: fixed;
-  background: #16213e;
-  border: 1px solid #444;
+  background: #1e293b;
+  border: 1px solid #475569;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 0.8rem;
   z-index: 100;
   pointer-events: none;
-  min-width: 140px;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 .tooltip.show { display: block; }
-.tooltip .tt-name { font-weight: 700; font-size: 0.9rem; }
-.tooltip .tt-row { margin-top: 4px; color: #aaa; }
+.tooltip .tt-name { font-weight: 700; font-size: 0.95rem; }
+.tooltip .tt-row { margin-top: 4px; color: #94a3b8; }
 .tooltip .tt-level { font-weight: 700; margin-top: 6px; font-size: 1rem; }
 
 .status-bar {
   text-align: center;
   padding: 8px;
-  font-size: 0.7rem;
-  color: #666;
+  font-size: 0.75rem;
+  color: #64748b;
 }
-.status-bar.error { color: #e74c3c; }
-.status-bar.ok { color: #2ecc71; }
-
-@media (min-width: 600px) {
-  .booth-label { font-size: 0.7rem; }
-  .booth-count { font-size: 1rem; }
-}
+.status-bar.error { color: #ef4444; }
+.status-bar.ok { color: #22c55e; }
 </style>
 </head>
 <body>
@@ -121,17 +68,7 @@ body { font-family: "Helvetica Neue", "Hiragino Sans", sans-serif; background: #
   <div class="updated" id="updated"></div>
 </div>
 
-<div class="map-wrapper" id="mapWrapper">
-  <img src="floor_plan.png" alt="教室配置図" id="floorPlan">
-</div>
-
-<div class="legend">
-  <div class="legend-item"><div class="legend-color" style="background:#2ecc71"></div>空いている</div>
-  <div class="legend-item"><div class="legend-color" style="background:#f1c40f"></div>やや混雑</div>
-  <div class="legend-item"><div class="legend-color" style="background:#e67e22"></div>混雑</div>
-  <div class="legend-item"><div class="legend-color" style="background:#e74c3c"></div>とても混雑</div>
-  <div class="legend-item"><div class="legend-color" style="background:#888"></div>データなし</div>
-</div>
+<div class="map-container" id="mapContainer"></div>
 
 <div class="status-bar" id="statusBar">読み込み中...</div>
 
@@ -144,88 +81,82 @@ body { font-family: "Helvetica Neue", "Hiragino Sans", sans-serif; background: #
 
 <script>
 const CONFIG = {
-  // Vercel API のベースURL（Shokiが読み取りエンドポイントを追加したら設定）
   API_BASE: "",
-  // 混雑データ取得エンドポイント（GET /api/booth/congestion を想定）
   API_ENDPOINT: "/api/booth/congestion",
   REFRESH_INTERVAL_MS: 30000,
 };
 
-const CONGESTION_LEVELS = [
-  { min: 0,  max: 10, label: "空いています", color: "rgba(46,204,113,0.6)",  textColor: "#fff" },
-  { min: 11, max: 25, label: "やや混雑",     color: "rgba(241,196,15,0.6)",  textColor: "#fff" },
-  { min: 26, max: 45, label: "混雑",         color: "rgba(230,126,34,0.65)", textColor: "#fff" },
-  { min: 46, max: 999,label: "とても混雑",   color: "rgba(231,76,60,0.7)",   textColor: "#fff" },
-];
-const NO_DATA_COLOR = "rgba(136,136,136,0.4)";
+const LEVEL_COLORS = {
+  0: "#94A3B8",
+  1: "#2C7BB6",
+  2: "#ABD9E9",
+  3: "#FFFFBF",
+  4: "#FDAE61",
+  5: "#D7191C",
+};
 
-let boothPositions = {};
+const LEVEL_LABELS = {
+  0: "データなし",
+  1: "非常に閑散",
+  2: "閑散",
+  3: "通常",
+  4: "混雑",
+  5: "非常に混雑",
+};
+
+const BOOTH_NAMES = {
+  "class1-1": "1の1", "class1-2": "1の2", "class1-3": "1の3", "class1-4": "1の4",
+  "class2-1": "2の1", "class2-2": "2の2", "class2-3": "2の3", "class2-4": "2の4",
+  "class3-1": "3の1", "class3-2": "3の2", "class3-3": "3の3", "class3-4": "3の4",
+  "club-esports": "eスポーツ部", "club-art": "美術部",
+  "eat-car-1": "キッチンカー1", "eat-car-2": "キッチンカー2", "eat-car-3": "キッチンカー3",
+  "pta-bazaar": "PTAバザー", "health": "保健室", "pe-gym": "体育館",
+};
+
+function deviceCountToLevel(count) {
+  if (count == null) return 0;
+  if (count <= 5)  return 1;
+  if (count <= 15) return 2;
+  if (count <= 30) return 3;
+  if (count <= 50) return 4;
+  return 5;
+}
+
 let boothData = {};
 
-function getCongestionLevel(count) {
-  if (count == null) return null;
-  return CONGESTION_LEVELS.find(l => count >= l.min && count <= l.max) || CONGESTION_LEVELS[CONGESTION_LEVELS.length - 1];
-}
+async function loadSvg() {
+  const res = await fetch("floormap.svg");
+  const text = await res.text();
+  document.getElementById("mapContainer").innerHTML = text;
 
-async function loadPositions() {
-  const res = await fetch("booth_positions.json");
-  const json = await res.json();
-  boothPositions = json.booths;
-}
-
-function renderOverlays() {
-  const wrapper = document.getElementById("mapWrapper");
-  document.querySelectorAll(".booth-overlay").forEach(el => el.remove());
-
-  for (const [id, pos] of Object.entries(boothPositions)) {
-    const el = document.createElement("div");
-    el.className = "booth-overlay";
-    el.dataset.boothId = id;
-    el.style.left = pos.x + "%";
-    el.style.top = pos.y + "%";
-    el.style.width = pos.w + "%";
-    el.style.height = pos.h + "%";
-
-    const data = boothData[id];
-    const level = data != null ? getCongestionLevel(data.deviceCount) : null;
-
-    el.style.background = level ? level.color : NO_DATA_COLOR;
-
-    const labelEl = document.createElement("div");
-    labelEl.className = "booth-label";
-    labelEl.textContent = pos.label;
-
-    const countEl = document.createElement("div");
-    countEl.className = "booth-count";
-    countEl.textContent = data != null ? data.deviceCount : "-";
-
-    el.appendChild(labelEl);
-    el.appendChild(countEl);
-
-    el.addEventListener("mouseenter", (e) => showTooltip(e, id));
+  document.querySelectorAll(".booth").forEach(el => {
+    el.addEventListener("mouseenter", (e) => showTooltip(e, el.dataset.boothId));
     el.addEventListener("mousemove", moveTooltip);
     el.addEventListener("mouseleave", hideTooltip);
-    el.addEventListener("touchstart", (e) => { e.preventDefault(); showTooltip(e, id); });
+    el.addEventListener("touchstart", (e) => { e.preventDefault(); showTooltip(e, el.dataset.boothId); });
+  });
+}
 
-    wrapper.appendChild(el);
-  }
+function updateColors() {
+  document.querySelectorAll(".booth").forEach(el => {
+    const id = el.dataset.boothId;
+    const data = boothData[id];
+    const level = data != null ? deviceCountToLevel(data.deviceCount) : 0;
+    el.setAttribute("fill", LEVEL_COLORS[level]);
+    el.dataset.level = level;
+  });
 }
 
 function showTooltip(e, boothId) {
   const tt = document.getElementById("tooltip");
-  const pos = boothPositions[boothId];
   const data = boothData[boothId];
-  const level = data != null ? getCongestionLevel(data.deviceCount) : null;
+  const level = data != null ? deviceCountToLevel(data.deviceCount) : 0;
 
-  document.getElementById("ttName").textContent = pos.label;
-  document.getElementById("ttFloor").textContent = pos.floor;
+  document.getElementById("ttName").textContent = BOOTH_NAMES[boothId] || boothId;
+  document.getElementById("ttFloor").textContent = `ID: ${boothId}`;
   document.getElementById("ttCount").textContent = data != null ? `検知台数: ${data.deviceCount}` : "データなし";
-  document.getElementById("ttLevel").textContent = level ? level.label : "---";
-  if (level) {
-    document.getElementById("ttLevel").style.color = level.color.replace(/[\d.]+\)$/, "1)");
-  } else {
-    document.getElementById("ttLevel").style.color = "#888";
-  }
+  document.getElementById("ttLevel").textContent = LEVEL_LABELS[level];
+  document.getElementById("ttLevel").style.color = LEVEL_COLORS[level];
 
   tt.classList.add("show");
   moveTooltip(e);
@@ -233,10 +164,10 @@ function showTooltip(e, boothId) {
 
 function moveTooltip(e) {
   const tt = document.getElementById("tooltip");
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  tt.style.left = (clientX + 12) + "px";
-  tt.style.top = (clientY - 40) + "px";
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  tt.style.left = (x + 12) + "px";
+  tt.style.top = (y - 40) + "px";
 }
 
 function hideTooltip() {
@@ -247,14 +178,14 @@ async function fetchCongestion() {
   const statusBar = document.getElementById("statusBar");
 
   if (!CONFIG.API_BASE) {
-    // デモモード: ランダムデータを生成
-    for (const id of Object.keys(boothPositions)) {
+    const boothIds = Object.keys(BOOTH_NAMES);
+    for (const id of boothIds) {
       boothData[id] = { deviceCount: Math.floor(Math.random() * 60) };
     }
     statusBar.textContent = "デモモード（API未設定）";
     statusBar.className = "status-bar";
     document.getElementById("updated").textContent = `最終更新: ${new Date().toLocaleTimeString("ja-JP")}`;
-    renderOverlays();
+    updateColors();
     return;
   }
 
@@ -262,16 +193,11 @@ async function fetchCongestion() {
     const res = await fetch(CONFIG.API_BASE + CONFIG.API_ENDPOINT);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-
-    // 想定レスポンス: { booths: { "class1-1": { deviceCount: 12, congestionLevel: 2 }, ... } }
-    if (json.booths) {
-      boothData = json.booths;
-    }
-
-    statusBar.textContent = `接続中`;
+    if (json.booths) boothData = json.booths;
+    statusBar.textContent = "接続中";
     statusBar.className = "status-bar ok";
     document.getElementById("updated").textContent = `最終更新: ${new Date().toLocaleTimeString("ja-JP")}`;
-    renderOverlays();
+    updateColors();
   } catch (e) {
     statusBar.textContent = `取得エラー: ${e.message}`;
     statusBar.className = "status-bar error";
@@ -279,14 +205,12 @@ async function fetchCongestion() {
 }
 
 async function init() {
-  await loadPositions();
-  renderOverlays();
+  await loadSvg();
   await fetchCongestion();
   setInterval(fetchCongestion, CONFIG.REFRESH_INTERVAL_MS);
 }
 
-document.getElementById("floorPlan").addEventListener("load", init);
-if (document.getElementById("floorPlan").complete) init();
+init();
 </script>
 </body>
 </html>
