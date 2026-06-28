@@ -3,10 +3,12 @@ tools/generate_configs.py
 教室ごとの配布用パッケージを一括生成するスクリプト
 
 使い方:
-  # per-boothトークン（推奨。boothId→token のJSONを各Surfaceに埋め込む）
+  # per-boothトークン（推奨）
   python tools/generate_configs.py \
     --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json \
-    --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app
+    --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app \
+    --firebase-key-file ../bluetooth-positioning-system-data/credentials/firebase_key.json \
+    --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv
 
   # 単一共有トークン（旧方式・後方互換）
   python tools/generate_configs.py \
@@ -42,8 +44,8 @@ BOOTH_IDS = [
     "class2-1", "class2-2", "class2-3", "class2-4",
     "class3-1", "class3-2", "class3-3", "class3-4",
     "club-esports", "club-art",
-    "eat-car-1", "eat-car-2", "eat-car-3",
-    "pta-bazaar",
+    "eat-car-1", "eat-car-2", "eat-car-3", "pta-bazaar",
+    "health", "pe-gym",
 ]
 
 SETTINGS_TEMPLATE = '''\
@@ -120,6 +122,8 @@ def main():
                         help="全ブース共通の単一APIトークンファイル（旧方式・後方互換。--token-mapと併用不可）")
     parser.add_argument("--firebase-database-url", default="",
                         help="RTDB の URL（例: https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app）。未指定なら RTDB 送信を無効化")
+    parser.add_argument("--firebase-key-file", default=None,
+                        help="Firebaseサービスアカウントキーのパス。各配布パッケージの credentials/firebase_key.json にコピー")
     parser.add_argument("--rssi-csv", default=None, help="RSSI閾値CSVのパス")
     parser.add_argument("--mac-salt", default=None,
                         help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
@@ -174,6 +178,11 @@ def main():
             firebase_database_url=firebase_database_url,
         )
         (config_dir / "settings.py").write_text(settings, encoding="utf-8")
+
+        if args.firebase_key_file:
+            cred_dir = dest / "credentials"
+            cred_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(args.firebase_key_file, cred_dir / "firebase_key.json")
 
     print(f"{len(booth_ids)} 教室分の配布パッケージを {output_dir} に生成しました。")
     print(f"各フォルダをUSBで各Surfaceにコピーしてください。")
