@@ -19,9 +19,13 @@ from config.settings import (
 )
 
 
-def upload(mac_addresses: list[str]) -> bool:
+def upload(mac_addresses: list[str], devices: list[dict] | None = None) -> bool:
     """
     スキャン結果を Vercel API へ POST する
+
+    Args:
+        mac_addresses: 重複排除済み擬似IDリスト
+        devices: {mac_hash, rssi} のリスト（省略可）
 
     Returns:
         bool: 送信成功なら True、失敗なら False
@@ -32,6 +36,8 @@ def upload(mac_addresses: list[str]) -> bool:
         "macAddresses": mac_addresses,
         "operatorId": OPERATOR_ID,
     }
+    if devices is not None:
+        payload["devices"] = devices
 
     headers = {
         "Content-Type": "application/json",

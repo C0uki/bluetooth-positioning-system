@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from scanner.bluetooth_scanner import scan_devices, get_filtered_macs
+from scanner.bluetooth_scanner import scan_devices, get_filtered_macs, get_filtered_results
 from processor.mac_deduplicator import deduplicate
 from logger.rssi_logger import log_rssi
 from uploader.api_uploader import upload
@@ -46,7 +46,10 @@ async def _run_scan():
             print(f"[{_now()}] RTDB送信エラー（無視して続行）: {e}")
         filtered_macs = get_filtered_macs(raw_results)
         unique_macs = deduplicate(filtered_macs)
-        success = upload(unique_macs)
+        filtered_results = get_filtered_results(raw_results)
+        unique_devices = {r["mac_hash"]: r["rssi"] for r in filtered_results}
+        devices_payload = [{"pseudoId": k, "rssi": v} for k, v in unique_devices.items()]
+        success = upload(unique_macs, devices=devices_payload)
 
         _last_send_time = datetime.now().strftime("%H:%M:%S")
         if success:
