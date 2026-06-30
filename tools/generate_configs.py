@@ -90,6 +90,10 @@ COPY_ITEMS = [
     "logger",
 ]
 
+EXTRA_COPY = [
+    ("tools/rssi_demo.py", "rssi_demo.py"),
+]
+
 
 def _resolve_tokens(args, booth_ids: list[str]) -> dict:
     """各 boothId に対応するトークンを解決する（単一トークン or per-boothマップ）。"""
@@ -164,6 +168,12 @@ def main():
             elif src.is_file():
                 dest.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dest / item)
+
+        for src_rel, dest_name in EXTRA_COPY:
+            src = project_root / src_rel
+            if src.is_file():
+                dest.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dest / dest_name)
 
         threshold = rssi_thresholds.get(booth_id)
         rssi_value = str(threshold) if threshold is not None else "None"
