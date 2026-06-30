@@ -11,3 +11,4 @@ venv/
 
 # 配布用出力
 dist/
+dist.zip
