@@ -18,7 +18,8 @@ _db = None
 _initialized = False
 _queue: collections.deque = collections.deque(maxlen=10)
 
-KEY_PATH = Path(__file__).resolve().parent.parent / "credentials" / "firebase_key.json"
+_project_root = Path(__file__).resolve().parent.parent
+KEY_PATH = _project_root / "credentials" / "firebase_key.json"
 
 
 def _ensure_initialized() -> bool:

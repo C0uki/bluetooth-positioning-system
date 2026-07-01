@@ -13,8 +13,15 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-DEFAULT_KEY = Path(__file__).resolve().parent.parent / "credentials" / "firebase_key.json"
-RTDB_URL = "https://isf-db-6eec4-default-rtdb.asia-southeast1.firebasedatabase.app"
+# tools/内からの実行: parent.parent = プロジェクトルート
+# dist/booth/内からの実行: parent = ブースフォルダ
+_here = Path(__file__).resolve().parent
+DEFAULT_KEY = (
+    _here / "credentials" / "firebase_key.json"
+    if (_here / "credentials" / "firebase_key.json").exists()
+    else _here.parent / "credentials" / "firebase_key.json"
+)
+RTDB_URL = "https://isf-webapp-default-rtdb.asia-southeast1.firebasedatabase.app"
 
 
 def main():
