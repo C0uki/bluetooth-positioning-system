@@ -20,7 +20,7 @@ python main.py
 ```bash
 python tools/generate_configs.py \
   --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json \
-  --firebase-database-url https://isf-db-6eec4-default-rtdb.asia-southeast1.firebasedatabase.app
+  --firebase-database-url https://isf-webapp-default-rtdb.asia-southeast1.firebasedatabase.app
 
 # RSSI閾値を指定する場合（朝テスト後）
 #   --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv

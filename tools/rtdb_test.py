@@ -21,7 +21,7 @@ DEFAULT_KEY = (
     if (_here / "credentials" / "firebase_key.json").exists()
     else _here.parent / "credentials" / "firebase_key.json"
 )
-RTDB_URL = "https://isf-db-6eec4-default-rtdb.asia-southeast1.firebasedatabase.app"
+RTDB_URL = "https://isf-webapp-default-rtdb.asia-southeast1.firebasedatabase.app"
 
 
 def main():
