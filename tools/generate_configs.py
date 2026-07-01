@@ -92,6 +92,7 @@ COPY_ITEMS = [
 
 EXTRA_COPY = [
     ("tools/rssi_demo.py", "rssi_demo.py"),
+    ("tools/rtdb_test.py", "rtdb_test.py"),
 ]
 
 
