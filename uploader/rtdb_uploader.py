@@ -2,44 +2,58 @@
 uploader/rtdb_uploader.py
 RSSIスキャン結果を Firebase Realtime Database へ送信するモジュール
 
-認証なし write-only 方式（B1）:
-  サービスアカウントキーは配布せず、RTDB の REST API へ直接 POST する。
-  書き込みは RTDB セキュリティルールで rssi_logs/<date>/<booth> 配下への
-  「新規追加のみ（上書き・削除・読み取り不可）＋フィールド/型検証」に限定される。
-  ルール定義は data リポジトリの database.rules.json を参照。
+Firebase Admin SDK 方式:
+  credentials/firebase_key.json のサービスアカウントキーで認証し、
+  RTDB の rssi_logs/<date>/<booth> 配下へ append-only で書き込む。
+  キーファイルが存在しない場合は RTDB 送信をスキップする。
 """
 
 import collections
 from datetime import datetime
-
-import requests
+from pathlib import Path
 
 import config.settings as settings
 
-RTDB_TIMEOUT_SECONDS = 10
-
-_base_url: str | None = None
-_session: requests.Session | None = None
+_db = None
 _initialized = False
 _queue: collections.deque = collections.deque(maxlen=10)
 
+KEY_PATH = Path(__file__).resolve().parent.parent / "credentials" / "firebase_key.json"
+
 
 def _ensure_initialized() -> bool:
-    global _base_url, _session, _initialized
+    global _db, _initialized
 
     if _initialized:
-        return _base_url is not None
+        return _db is not None
 
     _initialized = True
 
-    url = settings.FIREBASE_DATABASE_URL
-    if not url:
+    if not settings.FIREBASE_DATABASE_URL:
         print("[RTDB] URL未設定のためスキップ")
         return False
 
-    _base_url = url.rstrip("/")
-    _session = requests.Session()
-    return True
+    if not KEY_PATH.exists():
+        print(f"[RTDB] SAキーが見つかりません（{KEY_PATH}）。RTDB送信をスキップします。")
+        return False
+
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, db as rtdb
+
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(str(KEY_PATH))
+            firebase_admin.initialize_app(cred, {
+                "databaseURL": settings.FIREBASE_DATABASE_URL,
+            })
+
+        _db = rtdb
+        print("[RTDB] Firebase Admin SDK 初期化完了")
+        return True
+
+    except Exception as e:
+        print(f"[RTDB] 初期化失敗: {e}")
+        return False
 
 
 def upload_rssi(scan_results: list[dict]) -> None:
@@ -69,35 +83,23 @@ def upload_rssi(scan_results: list[dict]) -> None:
 
 
 def _send_records(records: list[dict]) -> list[dict]:
-    """
-    レコードを1件ずつ POST する（ルールが新規追加のみ許可のため push 単位で送信）。
-
-    Returns:
-        送信できなかった残りのレコード（成功時は空リスト）。
-        途中で失敗した場合は、未送信分のみを返して重複送信を最小化する。
-    """
     for i, record in enumerate(records):
         try:
-            _post_one(record)
+            _push_one(record)
         except Exception as e:
             print(f"[RTDB] 送信失敗、キューに追加: {e}")
             return records[i:]
     return []
 
 
-def _post_one(record: dict) -> None:
-    url = f"{_base_url}/rssi_logs/{record['date']}/{settings.BOOTH_ID}.json"
-    response = _session.post(
-        url,
-        json={
-            "timestamp": record["timestamp"],
-            "mac_hash": record["mac_hash"],
-            "rssi": record["rssi"],
-            "passed_filter": record["passed_filter"],
-        },
-        timeout=RTDB_TIMEOUT_SECONDS,
-    )
-    response.raise_for_status()
+def _push_one(record: dict) -> None:
+    ref = _db.reference(f"rssi_logs/{record['date']}/{settings.BOOTH_ID}")
+    ref.push({
+        "timestamp": record["timestamp"],
+        "mac_hash": record["mac_hash"],
+        "rssi": record["rssi"],
+        "passed_filter": record["passed_filter"],
+    })
 
 
 def _flush_queue() -> None:

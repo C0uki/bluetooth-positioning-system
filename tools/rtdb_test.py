@@ -1,73 +1,68 @@
 """
 tools/rtdb_test.py
-Firebase RTDB への疎通確認スクリプト
+Firebase RTDB への疎通確認スクリプト（Firebase Admin SDK 方式）
 
 使い方:
   python tools/rtdb_test.py
   python tools/rtdb_test.py --booth class1-1
-  python tools/rtdb_test.py --url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app
+  python tools/rtdb_test.py --key credentials/firebase_key.json
 """
 
 import argparse
 import sys
 from datetime import datetime
+from pathlib import Path
 
-try:
-    import requests
-except ImportError:
-    sys.exit("requests がインストールされていません。pip install requests を実行してください。")
-
+DEFAULT_KEY = Path(__file__).resolve().parent.parent / "credentials" / "firebase_key.json"
 RTDB_URL = "https://isf-db-6eec4-default-rtdb.asia-southeast1.firebasedatabase.app"
 
 
-def test_write(rtdb_url: str, booth_id: str) -> bool:
-    date = datetime.now().strftime("%Y-%m-%d")
-    url = f"{rtdb_url}/rssi_logs/{date}/{booth_id}.json"
-    payload = {
-        "timestamp": datetime.now().isoformat(),
-        "mac_hash": "testdeadbeef0001",
-        "rssi": -65,
-        "passed_filter": True,
-    }
-
-    print(f"送信先: {url}")
-    print(f"ペイロード: {payload}")
-    print()
-
-    try:
-        r = requests.post(url, json=payload, timeout=10)
-        if r.status_code == 200:
-            print(f"✅ 成功 (200): {r.text}")
-            print()
-            print("Firebase Console で確認:")
-            print(f"  Realtime Database → データ → rssi_logs → {date} → {booth_id}")
-            return True
-        else:
-            print(f"❌ エラー ({r.status_code}): {r.text}")
-            if r.status_code == 401 or "Permission denied" in r.text:
-                print()
-                print("→ RTDBセキュリティルールがデプロイされていません。")
-                print("  Shoki に database.rules.json のデプロイを依頼してください。")
-            return False
-    except requests.exceptions.ConnectionError as e:
-        print(f"❌ 接続エラー: {e}")
-        print("→ ネットワーク接続を確認してください。")
-        return False
-    except requests.exceptions.Timeout:
-        print("❌ タイムアウト: Firebase に接続できませんでした。")
-        return False
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Firebase RTDB 疎通確認")
+    parser = argparse.ArgumentParser(description="Firebase RTDB 疎通確認（Admin SDK）")
+    parser.add_argument("--key", default=str(DEFAULT_KEY), help="SAキーのパス")
     parser.add_argument("--url", default=RTDB_URL, help="RTDB URL")
     parser.add_argument("--booth", default="test-booth", help="ブースID（デフォルト: test-booth）")
     args = parser.parse_args()
 
-    print("=== Firebase RTDB 疎通確認 ===")
+    key_path = Path(args.key)
+    if not key_path.exists():
+        sys.exit(f"❌ SAキーが見つかりません: {key_path}\n"
+                 f"  Shoki から受け取った firebase_key.json を credentials/ に置いてください。")
+
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, db as rtdb
+    except ImportError:
+        sys.exit("❌ firebase-admin がインストールされていません。\n"
+                 "  pip install firebase-admin を実行してください。")
+
+    print("=== Firebase RTDB 疎通確認（Admin SDK）===")
+    print(f"SAキー: {key_path}")
+    print(f"RTDB URL: {args.url}")
+    print(f"ブースID: {args.booth}")
     print()
-    success = test_write(args.url, args.booth)
-    sys.exit(0 if success else 1)
+
+    try:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(str(key_path))
+            firebase_admin.initialize_app(cred, {"databaseURL": args.url})
+
+        date = datetime.now().strftime("%Y-%m-%d")
+        ref = rtdb.reference(f"rssi_logs/{date}/{args.booth}")
+        result = ref.push({
+            "timestamp": datetime.now().isoformat(),
+            "mac_hash": "testdeadbeef0001",
+            "rssi": -65,
+            "passed_filter": True,
+        })
+        print(f"✅ 成功: key={result.key}")
+        print()
+        print("Firebase Console で確認:")
+        print(f"  Realtime Database → データ → rssi_logs → {date} → {args.booth}")
+
+    except Exception as e:
+        print(f"❌ エラー: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
