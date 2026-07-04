@@ -9,6 +9,7 @@ Firebase Admin SDK 方式:
 """
 
 import collections
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -78,35 +79,44 @@ def upload_rssi(scan_results: list[dict]) -> None:
         for result in scan_results
     ]
 
-    unsent = _send_records(records)
-    if unsent:
-        _queue.append(unsent)
+    if not records:
+        return
+
+    if not _send_batch(records):
+        if len(_queue) == _queue.maxlen:
+            print(f"[RTDB] 未送信キューが上限（{_queue.maxlen}バッチ）のため、最古のバッチ {len(_queue[0])} 件を破棄します")
+        _queue.append(records)
 
 
-def _send_records(records: list[dict]) -> list[dict]:
-    for i, record in enumerate(records):
-        try:
-            _push_one(record)
-        except Exception as e:
-            print(f"[RTDB] 送信失敗、キューに追加: {e}")
-            return records[i:]
-    return []
+def _entry_key(record: dict) -> str:
+    # Admin SDK の push() は1件ごとにHTTP POSTが発生するため使わず、
+    # キーはローカルで生成する（timestamp接頭辞で時刻順ソート可能に保つ）。
+    time_part = record["timestamp"][11:19].replace(":", "")
+    return f"{time_part}_{uuid.uuid4().hex[:12]}"
 
 
-def _push_one(record: dict) -> None:
-    ref = _db.reference(f"rssi_logs/{record['date']}/{settings.BOOTH_ID}")
-    ref.push({
-        "timestamp": record["timestamp"],
-        "mac_hash": record["mac_hash"],
-        "rssi": record["rssi"],
-        "passed_filter": record["passed_filter"],
-    })
+def _send_batch(records: list[dict]) -> bool:
+    """1スキャン分を multi-location update で一括送信する（HTTPリクエスト1回）"""
+    ref = _db.reference(f"rssi_logs/{records[0]['date']}/{settings.BOOTH_ID}")
+    updates = {
+        _entry_key(r): {
+            "timestamp": r["timestamp"],
+            "mac_hash": r["mac_hash"],
+            "rssi": r["rssi"],
+            "passed_filter": r["passed_filter"],
+        }
+        for r in records
+    }
+    try:
+        ref.update(updates)
+        return True
+    except Exception as e:
+        print(f"[RTDB] バッチ送信失敗（{len(records)}件・未送信キューで保持し次回再送）: {e}")
+        return False
 
 
 def _flush_queue() -> None:
     while _queue:
-        unsent = _send_records(_queue[0])
-        if unsent:
-            _queue[0] = unsent
+        if not _send_batch(_queue[0]):
             break
         _queue.popleft()
