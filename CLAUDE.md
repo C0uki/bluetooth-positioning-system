@@ -56,11 +56,13 @@ eat-car-1, eat-car-2, eat-car-3,
 pta-bazaar
 ```
 
-## セキュリティ注意事項
+## セキュリティ・プライバシー注意事項
 
 - `dist/` は絶対にこのリポジトリへpushしない（.gitignore済み・サービスアカウントキー含有リスク）
 - `credentials/` はPrivateリポジトリ（bluetooth-positioning-system-data）で管理
 - 生MACアドレスは保存・送信しない（ソルト付きハッシュで擬似ID化）
+- プライバシー方針（会場掲示・データ保持期間・イベント後のソルト破棄）は `docs/privacy.md` を参照
+- RSSIログの保持期限は 2027-03-31。位置推定の検証完了後はソルトを破棄する
 - RTDB送信は認証なしwrite-onlyルール経由（SA鍵は配布しない）
 - `FIREBASE_DATABASE_URL` は秘密情報ではない（公開OK）
 - `booth_tokens.json` は秘密情報（gitにコミットしない）
