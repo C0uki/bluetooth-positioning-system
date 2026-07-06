@@ -62,28 +62,6 @@ Bluetooth データが3分間途絶えると自動的に手動モードへ切り
 
 ---
 
-## RTDB（rssi_logs）にデータが記録されない
-
-`uploader/rtdb_uploader.py` はRTDB送信の失敗を握りつぶさず、以下のログを出力します。
-
-| ログ | 原因 |
-|---|---|
-| `[RTDB] URL未設定のためスキップ` | `config/settings.py` の `FIREBASE_DATABASE_URL` が空 |
-| `[RTDB] SAキーが見つかりません` | `credentials/firebase_key.json` が配置されていない |
-| `[RTDB] 初期化失敗: <エラー>` | SAキーの内容不正、またはRTDB URLがプロジェクトと不一致 |
-| `[RTDB] 送信失敗、キューに追加: <エラー>` | 一時的なネットワーク不良（次回送信時に再試行） |
-
-`FIREBASE_DATABASE_URL` は `https://isf-webapp-default-rtdb.asia-southeast1.firebasedatabase.app`
-であることを確認してください（別プロジェクトのURLを指定すると401 Unauthorizedになります）。
-
-疎通確認には `tools/rtdb_test.py` を使用します。
-
-```bash
-python tools/rtdb_test.py
-```
-
----
-
 ## boothId 不一致によるエラー
 
 `booth_tokens.json` のキー、Surface側の `config/settings.py` の `BOOTH_ID`、
