@@ -6,7 +6,7 @@ Couki担当。Webアプリ側（Vercel API・Firestore・画面）はShoki担当
 ## 関連リポジトリ
 
 - `bluetooth-positioning-system`（Public・本リポジトリ）— Surfaceで動くスキャン・送信コード
-- `bluetooth-positioning-system-data`（Private）— トークン・RTDBルール・ドキュメント
+- `bluetooth-positioning-system-data`（Private）— トークン・ドキュメント
 
 ## セットアップ
 
@@ -19,8 +19,7 @@ python main.py
 
 ```bash
 python tools/generate_configs.py \
-  --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json \
-  --firebase-database-url https://isf-webapp-default-rtdb.asia-southeast1.firebasedatabase.app
+  --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json
 
 # RSSI閾値を指定する場合（朝テスト後）
 #   --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv
@@ -39,8 +38,7 @@ python tools/generate_booth_tokens.py \
 | `scanner/bluetooth_scanner.py` | BLEスキャン。MAC→ソルト付きSHA-256擬似IDに変換 |
 | `processor/mac_deduplicator.py` | 擬似IDの重複排除 |
 | `uploader/api_uploader.py` | Vercel API送信（Bearer認証・per-boothトークン） |
-| `uploader/rtdb_uploader.py` | Firebase RTDB送信（認証なしREST・append-only） |
-| `logger/rssi_logger.py` | ローカルCSV記録（RTDBの成否に関わらず全件記録） |
+| `logger/rssi_logger.py` | ローカルCSV記録（全件記録） |
 | `tools/generate_configs.py` | 教室別配布パッケージ生成（dist/に出力） |
 | `tools/generate_booth_tokens.py` | per-boothトークンJSON生成 |
 | `config/settings.py` | 設定ファイル（generate_configs.pyが教室ごとに書き換え） |
@@ -63,6 +61,4 @@ pta-bazaar
 - 生MACアドレスは保存・送信しない（ソルト付きハッシュで擬似ID化）
 - プライバシー方針（会場掲示・データ保持期間・イベント後のソルト破棄）は `docs/privacy.md` を参照
 - RSSIログの保持期限は 2027-03-31。位置推定の検証完了後はソルトを破棄する
-- RTDB送信は認証なしwrite-onlyルール経由（SA鍵は配布しない）
-- `FIREBASE_DATABASE_URL` は秘密情報ではない（公開OK）
 - `booth_tokens.json` は秘密情報（gitにコミットしない）

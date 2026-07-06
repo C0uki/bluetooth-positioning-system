@@ -40,11 +40,6 @@ ALLOW_EMPTY_SALT_FOR_DEV = False
 # 送信先 API（管理用Vercel）
 # -----------------------------------------------
 
-# ===== Firebase RTDB設定（RSSIログ収集） =====
-# 認証なし write-only ルール経由で REST 送信する（サービスアカウントキーは配布しない）。
-# 空ならRTDB送信を無効化。generate_configs.py が --firebase-database-url で埋め込む。
-FIREBASE_DATABASE_URL = ""
-
 API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = ""
 API_TIMEOUT_SECONDS = 10

@@ -6,20 +6,15 @@ tools/generate_configs.py
   # per-boothトークン（推奨）
   python tools/generate_configs.py \
     --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json \
-    --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app \
-    --firebase-key-file ../bluetooth-positioning-system-data/credentials/firebase_key.json \
     --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv
 
   # 単一共有トークン（旧方式・後方互換）
   python tools/generate_configs.py \
-    --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt \
-    --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app
+    --token-file ../bluetooth-positioning-system-data/credentials/api_token.txt
 
   ※ --token-map と --token-file はどちらか一方を指定する。
   ※ booth_tokens.json は tools/generate_booth_tokens.py で生成でき、
      同じJSONをサーバ（Vercel）の BLUETOOTH_SECRET 環境変数にも設定する。
-  ※ RTDB へは認証なし write-only ルール経由で REST 送信するため、
-     サービスアカウントキーは配布しない（database.rules.json を参照）。
 
 生成される構成:
   dist/
@@ -59,8 +54,6 @@ RSSI_THRESHOLD = {rssi_threshold}
 
 MAC_HASH_SALT = "{mac_salt}"
 
-FIREBASE_DATABASE_URL = "{firebase_database_url}"
-
 API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
@@ -92,7 +85,6 @@ COPY_ITEMS = [
 
 EXTRA_COPY = [
     ("tools/rssi_demo.py", "rssi_demo.py"),
-    ("tools/rtdb_test.py", "rtdb_test.py"),
 ]
 
 
@@ -125,10 +117,6 @@ def main():
                         help="boothId→token のJSONファイル（per-boothトークン。--token-fileと併用不可）")
     parser.add_argument("--token-file", default=None,
                         help="全ブース共通の単一APIトークンファイル（旧方式・後方互換。--token-mapと併用不可）")
-    parser.add_argument("--firebase-database-url", default="",
-                        help="RTDB の URL（例: https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app）。未指定なら RTDB 送信を無効化")
-    parser.add_argument("--firebase-key-file", default=None,
-                        help="Firebaseサービスアカウントキーのパス。各配布パッケージの credentials/firebase_key.json にコピー")
     parser.add_argument("--rssi-csv", default=None, help="RSSI閾値CSVのパス")
     parser.add_argument("--mac-salt", default=None,
                         help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
@@ -153,8 +141,6 @@ def main():
                 val = row["rssi_threshold"].strip() if row.get("rssi_threshold") else ""
                 if val and val.lower() != "none":
                     rssi_thresholds[bid] = int(val)
-
-    firebase_database_url = args.firebase_database_url.strip()
 
     if output_dir.exists():
         shutil.rmtree(output_dir)
@@ -186,14 +172,8 @@ def main():
             token=token_map[booth_id],
             rssi_threshold=rssi_value,
             mac_salt=mac_salt,
-            firebase_database_url=firebase_database_url,
         )
         (config_dir / "settings.py").write_text(settings, encoding="utf-8")
-
-        if args.firebase_key_file:
-            cred_dir = dest / "credentials"
-            cred_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(args.firebase_key_file, cred_dir / "firebase_key.json")
 
     print(f"{len(booth_ids)} 教室分の配布パッケージを {output_dir} に生成しました。")
     print(f"各フォルダをUSBで各Surfaceにコピーしてください。")
