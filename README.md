@@ -183,7 +183,7 @@ python tools/generate_booth_tokens.py \
 | 担当 | 内容 |
 |---|---|
 | Couki（[@C0uki](https://github.com/C0uki)） | Bluetooth 実装（Surface 側スキャン・送信） |
-| Shoki | Web アプリ全体（閲覧用・管理用 Vercel、API Route、混雑レベル算出ロジック） |
+| Shoki （[@sho29saka31](https://github.com/sho29saka31)）| Web アプリ全体（閲覧用・管理用 Vercel、API Route、混雑レベル算出ロジック） |
 
 ---
 
