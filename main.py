@@ -1,6 +1,6 @@
 """
 main.py
-ISFプロジェクト - エントリーポイント（v5対応）
+BPSプロジェクト - エントリーポイント（v5対応）
 
 役割：Bluetoothスキャン → RSSIログ記録 → 重複排除 → 管理用Vercel API への送信
 ※ 混雑レベルの計算はサーバー側（Vercel API Route）で実行されます。
@@ -65,7 +65,7 @@ async def _run_scan():
 def _show_status():
     print("\033[2J\033[H", end="")
     print("══════════════════════════════════════════")
-    print(f"  ISFプロジェクト (v5)")
+    print(f"  BPSプロジェクト (v5)")
     print(f"  ブース: {BOOTH_ID}")
     print("══════════════════════════════════════════")
     print()
@@ -121,7 +121,7 @@ def _input_token():
     import subprocess
     result = subprocess.run(
         ["powershell", "-Command",
-         'Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox("APIトークンを入力してください", "ISFプロジェクト")'],
+         'Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox("APIトークンを入力してください", "BPSプロジェクト")'],
         capture_output=True, text=True
     )
     token = result.stdout.strip() if result.returncode == 0 else ""
