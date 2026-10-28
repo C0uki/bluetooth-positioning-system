@@ -30,17 +30,15 @@ Surface（各ブース・1台固定）
         ├── processor/mac_deduplicator.py
         │     擬似IDの重複排除
         ├── logger/rssi_logger.py
-        │     RSSI・擬似IDをローカル CSV に記録（RTDBの成否に関わらず全件）
+        │     RSSI・擬似IDをローカル CSV に記録（全件記録）
         └── uploader/
-              ├── api_uploader.py
+              └── api_uploader.py
               │     管理用Vercel API への POST 送信（Bearer 認証・per-booth トークン）
               │           ↓
               │     Vercel API Route（Shoki実装）
               │           ├── 混雑レベル算出
               │           ├── Firestore booths コレクション更新
               │           └── 閲覧用Vercelへ revalidation リクエスト
-              └── rtdb_uploader.py
-                    Firebase RTDB への RSSI ログ送信（認証なし write-only REST）
 ```
 
 ---
@@ -98,7 +96,6 @@ pip install -r requirements.txt
 
 - `BOOTH_ID`：設置ブースのID
 - `BLUETOOTH_SECRET`：API 認証トークン（Privateリポジトリで管理）
-- `FIREBASE_DATABASE_URL`：Firebase RTDB の URL（未設定なら RTDB 送信をスキップ）
 - `MAC_HASH_SALT`：擬似ID生成用ソルト（配布パッケージ生成時に一括設定）
 - `RSSI_THRESHOLD`：RSSI フィルタ閾値（`None` でフィルタ無効）
 
@@ -116,11 +113,7 @@ python main.py
 
 ```bash
 python tools/generate_configs.py \
-  --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json \
-  --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app
-
-# Firebase SA キーを各パッケージに同梱する場合
-#   --firebase-key-file ../bluetooth-positioning-system-data/credentials/firebase_key.json
+  --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json
 
 # RSSI 閾値を指定する場合（朝テスト後）
 #   --rssi-csv ../bluetooth-positioning-system-data/rssi_thresholds.csv
@@ -144,11 +137,22 @@ python tools/generate_booth_tokens.py \
 | `scanner/bluetooth_scanner.py` | BLE スキャン。MAC → ソルト付き SHA-256 擬似IDに変換 |
 | `processor/mac_deduplicator.py` | 擬似IDの重複排除 |
 | `uploader/api_uploader.py` | Vercel API 送信（Bearer 認証・per-booth トークン） |
-| `uploader/rtdb_uploader.py` | Firebase RTDB 送信（認証なし REST・append-only） |
-| `logger/rssi_logger.py` | ローカル CSV 記録（RTDB の成否に関わらず全件記録） |
+| `logger/rssi_logger.py` | ローカル CSV 記録（全件記録） |
 | `tools/generate_configs.py` | 教室別配布パッケージ生成（`dist/` に出力） |
 | `tools/generate_booth_tokens.py` | per-booth トークン JSON 生成 |
 | `config/settings.py` | 設定ファイル（`generate_configs.py` がブースごとに書き換え） |
+
+---
+
+## プライバシーへの配慮
+
+来場者のプライバシー保護方針は [docs/privacy.md](docs/privacy.md) に定めています。要点:
+
+- 生 MAC アドレスはスキャン時に即時ハッシュ化し、保存・送信は一切しない
+- アドバタイジングパケットの存在検知によるカウントのみで、通信内容は傍受しない
+- 会場入口・各ブースに計測の目的と方法を掲示する（掲示文テンプレートは docs/privacy.md 参照）
+- RSSI ログは検証目的に限り保持し、保持期限（2027-03-31）までに削除する
+- 位置推定の検証完了後にソルトを破棄し、擬似IDと端末の対応付けを不可能にする
 
 ---
 
@@ -157,8 +161,6 @@ python tools/generate_booth_tokens.py \
 - `dist/` は絶対にこのリポジトリへ push しない（`.gitignore` 済み・SA キー含有リスク）
 - `credentials/` は Private リポジトリ（`bluetooth-positioning-system-data`）で管理
 - 生 MAC アドレスは保存・送信しない（ソルト付きハッシュで擬似 ID 化）
-- RTDB 送信は認証なし write-only ルール経由（SA キーは配布しない）
-- `FIREBASE_DATABASE_URL` は秘密情報ではない（公開OK）
 - `booth_tokens.json` は秘密情報（git にコミットしない）
 
 ---
@@ -181,7 +183,7 @@ python tools/generate_booth_tokens.py \
 | 担当 | 内容 |
 |---|---|
 | Couki（[@C0uki](https://github.com/C0uki)） | Bluetooth 実装（Surface 側スキャン・送信） |
-| Shoki | Web アプリ全体（閲覧用・管理用 Vercel、API Route、混雑レベル算出ロジック） |
+| Shoki （[@sho29saka31](https://github.com/sho29saka31)）| Web アプリ全体（閲覧用・管理用 Vercel、API Route、混雑レベル算出ロジック） |
 
 ---
 

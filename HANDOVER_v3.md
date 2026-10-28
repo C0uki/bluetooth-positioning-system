@@ -8,7 +8,7 @@
 ## プロジェクト概要
 - **アプリ名**: BPS webapp（旧称: inusoポケット）
 - **制作名**: BPSプロジェクト
-- **文化祭本番**: 2026年9月7日
+- **文化祭本番**: 2026年9月7日〜8日
 - **公開期間**: 2026年8月31日〜9月8日
 - **企画書バージョン**: v5（README-v5 / process.me 準拠）
 
@@ -70,8 +70,7 @@ bluetooth-positioning-system/（Public）
 │   ├── mac_deduplicator.py  # MACアドレス重複排除
 │   └── congestion_calculator.py  # 【ローカル確認専用】参考実装
 ├── uploader/
-│   ├── api_uploader.py      # Vercel API へPOST送信（混雑カウント）
-│   └── rtdb_uploader.py     # RSSIログを RTDB へ REST送信（認証なしwrite-onlyルール経由）
+│   └── api_uploader.py      # Vercel API へPOST送信（混雑カウント）
 ├── logger/
 │   └── rssi_logger.py       # RSSI値をCSVでローカル記録（バックアップ）
 └── tools/
@@ -80,9 +79,10 @@ bluetooth-positioning-system/（Public）
 bluetooth-positioning-system-data/（Private）
 ├── credentials/
 │   └── api_token.txt        # APIトークン（配布用・追跡対象）
-├── database.rules.json      # RTDB セキュリティルール（要デプロイ）
 └── .gitignore               # credentials/, logs/ を除外（SA鍵はコミットしない）
 ```
+
+> RTDB関連（`rtdb_uploader.py` / `database.rules.json`）は研究計画中止に伴い削除済み(2026-07)
 
 ---
 
@@ -91,31 +91,19 @@ bluetooth-positioning-system-data/（Private）
 機密情報の露出を減らすための対応。確定した設計と、コード外で必要な手作業を記す。
 
 ### 確定した方針
-- **RSSI収集（RTDB）**: サービスアカウントキーの配布を廃止。**認証なし write-only
-  セキュリティルール**経由で REST 送信する（B1）。Surface／USB配布物に秘密情報を置かない。
-  - ルールは `rssi_logs/<date>/<booth>` への**新規追加のみ**許可（上書き・削除・読み取り不可）、
-    かつ**フィールド/型検証**（`timestamp`/`mac_hash`:string, `rssi`:number, `passed_filter`:bool、
-    想定外フィールド拒否）。
-  - ルール定義: data リポジトリ `database.rules.json`。
-  - コード: `uploader/rtdb_uploader.py`（firebase-admin廃止 → `requests` でREST）、
-    `requirements.txt` から `firebase-admin` 削除、`generate_configs.py` は
-    `--firebase-database-url` で URL を受け取る（SA鍵コピー廃止）。
+- **RSSI収集（RTDB）**: 研究計画中止に伴い削除済み(2026-07)。
 - **共有APIトークン**: サーバ検証が Shoki 依存のため、今回はコード変更せず**要件を明文化**
   （data リポジトリ README）。
 
 ### コード外の手作業（未対応・TODO）
-1. **RTDBルールをデプロイ**: `database.rules.json` を Firebase Console または
-   `firebase deploy --only database` で反映（これを行うまで write-only保護は効かない）。
-2. **APIトークンのローテーション**: 旧トークンは本ファイルの git 履歴に残り漏えい扱い。
-   Shoki に Vercel 環境変数の再生成を依頼（下記3で per-booth 化すれば同時に解消）。
-3. **per-booth トークン＋token↔booth束縛**:
+1. **APIトークンのローテーション**: 旧トークンは本ファイルの git 履歴に残り漏えい扱い。
+   Shoki に Vercel 環境変数の再生成を依頼（下記2で per-booth 化すれば同時に解消）。
+2. **per-booth トークン＋token↔booth束縛**:
    - 方式は **方式2（boothId→token のJSONマップを env var に置く）** で確定。
    - Surface側は実装済み: `tools/generate_booth_tokens.py` でマップ生成 →
      `generate_configs.py --token-map` で各Surfaceに自分のトークンのみ埋め込み。
    - 残: Shoki がサーバ `/api/booth/bluetooth` で「boothId に紐づくトークンと一致しなければ403」を実装し、
      同じJSONを env var `BLUETOOTH_SECRET` に設定。boothId は ASCII slug（`class1-1` 等）で全体統一。
-4. **旧SA鍵の失効**: Vercel が同一サービスアカウントを使っていないことを確認のうえ、
-   Firebase Console で旧鍵を失効。
 
 ---
 
@@ -222,7 +210,7 @@ Shoki:
 
 1. Couki操作の1台でPublic/Privateリポジトリをclone
 2. トークン生成（per-booth）: `python tools/generate_booth_tokens.py --output ../bluetooth-positioning-system-data/credentials/booth_tokens.json` → 同じJSONをサーバの env var `BLUETOOTH_SECRET` にも設定
-3. 配布生成: `python tools/generate_configs.py --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json --firebase-database-url https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app` で全ブース分のパッケージを `dist/` に生成（SA鍵は配布されない／各Surfaceに自分のトークンのみ埋め込み）
+3. 配布生成: `python tools/generate_configs.py --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json` で全ブース分のパッケージを `dist/` に生成（各Surfaceに自分のトークンのみ埋め込み）
 4. USBメモリで各教室＋予備Surfaceにローカルコピー
 5. 各Surfaceで `install.bat`（初回のみ）→ `start.bat` で起動
 
@@ -252,15 +240,13 @@ class-1-1/
 - RSSI（信号強度）フィルタリングで対応を試みる（実装済み、閾値は朝テストで決定）
 - **採用/見送りの最終判断期限: 2026年8月上旬**
 
-### RSSI記録方針（将来の位置推定用）
-- **収集はクラウド（RTDB）が主**: `uploader/rtdb_uploader.py` が
-  `rssi_logs/<date>/<booth>` へ認証なしwrite-onlyルール経由でREST送信（上記#17参照）。
-- **CSVはローカルのバックアップ**: `logger/rssi_logger.py` が同じ内容をCSVにも記録。
+### RSSI記録方針
+- RTDBへのRSSI生ログ収集は研究計画中止に伴い削除済み(2026-07)。
+- **CSVはローカルのバックアップ**: `logger/rssi_logger.py` が全件をCSVに記録（当日の不具合調査用）。
   - 生MACは保存・送信しない。`MAC_HASH_SALT` 付きSHA-256で擬似ID化（`scanner/bluetooth_scanner.py: hash_mac`）
-  - 同一端末は常に同じ擬似IDになるため、重複排除・将来の位置推定（擬似ID＋RSSIパターン）は維持される
+  - 同一端末は常に同じ擬似IDになるため、重複排除は維持される
 - 形式: `timestamp, booth_id, mac_hash, rssi, passed_filter`
-- 収集済み RTDB データの読み出しは管理者がSA鍵でオフライン取得（鍵は配布せず開発機にのみ保管）。
-- USBでのCSV回収は予備手段（RTDB送信が不調だった端末の補完用）。
+- USBでのCSV回収は予備手段（不具合調査用ログの回収）。
 
 ### MACアドレスデータの保持・開示方針
 - 保持期間: 当面保持（秋以降の位置推定システム開発用の学習データ）

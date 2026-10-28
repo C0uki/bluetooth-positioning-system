@@ -27,17 +27,18 @@ RSSI_THRESHOLD = None
 
 # 生MACアドレスは保存・送信せず、このソルト付きハッシュで擬似ID化する。
 # 全教室・全期間で同一の値にすること（同一端末を同じ擬似IDに揃えるため）。
-# generate_configs.py が配布時に秘密のソルトを埋め込む。空でもハッシュ化は動作する。
+# generate_configs.py が配布時に秘密のソルトを埋め込む。
+# 空のままだとソルトなしハッシュはMAC空間の全数計算で逆引きできてしまい
+# 匿名化が事実上無効になるため、main.py が起動時にエラーで停止する。
 MAC_HASH_SALT = ""
+
+# 開発時にソルト未設定のまま動かすための明示的なオプトイン。
+# 本番（配布パッケージ）では必ず False のままにすること。
+ALLOW_EMPTY_SALT_FOR_DEV = False
 
 # -----------------------------------------------
 # 送信先 API（管理用Vercel）
 # -----------------------------------------------
-
-# ===== Firebase RTDB設定（RSSIログ収集） =====
-# 認証なし write-only ルール経由で REST 送信する（サービスアカウントキーは配布しない）。
-# 空ならRTDB送信を無効化。generate_configs.py が --firebase-database-url で埋め込む。
-FIREBASE_DATABASE_URL = ""
 
 API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
 BLUETOOTH_SECRET = ""
