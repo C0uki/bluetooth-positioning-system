@@ -1,4 +1,4 @@
-# ISF webapp / Bluetooth混雑検知システム — 引き継ぎサマリー v3
+# BPS webapp / Bluetooth混雑検知システム — 引き継ぎサマリー v3
 > 新しいチャットの最初にこのファイルを貼り付けることで、続きから会話できます。
 
 最終更新: 2026年6月22日
@@ -6,9 +6,8 @@
 ---
 
 ## プロジェクト概要
-- **アプリ名**: ISF webapp（旧称: inusoポケット）
-- **制作名**: ISFプロジェクト
-- **学校**: 犬山総合高等学校
+- **アプリ名**: BPS webapp（旧称: inusoポケット）
+- **制作名**: BPSプロジェクト
 - **文化祭本番**: 2026年9月7日〜8日
 - **公開期間**: 2026年8月31日〜9月8日
 - **企画書バージョン**: v5（README-v5 / process.me 準拠）
@@ -201,8 +200,8 @@ Couki:
   - bluetooth-positioning-system（Public）— 実装完了・push済み
   - bluetooth-positioning-system-data（Private）— 作成済み・トークン保存済み
 Shoki:
-  - ISF-viewer（閲覧用）
-  - ISF-admin（管理用）
+  - BPS-viewer（閲覧用）
+  - BPS-admin（管理用）
 ```
 
 ---

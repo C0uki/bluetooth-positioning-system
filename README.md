@@ -1,6 +1,6 @@
-# ISFプロジェクト - Bluetooth混雑検知システム
+# BPSプロジェクト - Bluetooth混雑検知システム
 
-ISF webapp（高等学校 文化祭向け情報共有PWAアプリ）向け
+BPS webapp（高等学校 文化祭向け情報共有PWAアプリ）向け
 Bluetooth を利用した混雑状況自動検知システム
 
 ---
@@ -187,4 +187,4 @@ python tools/generate_booth_tokens.py \
 
 ---
 
-*制作: ISFプロジェクト*
+*制作: BPSプロジェクト*

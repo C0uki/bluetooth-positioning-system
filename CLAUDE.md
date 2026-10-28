@@ -1,6 +1,6 @@
 # bluetooth-positioning-system
 
-ISF文化祭（2026-09-07）Bluetooth混雑検知システム — Surface側スキャン・送信コード。
+BPS文化祭（2026-09-07）Bluetooth混雑検知システム — Surface側スキャン・送信コード。
 Couki担当。Webアプリ側（Vercel API・Firestore・画面）はShoki担当。
 
 ## 関連リポジトリ
