@@ -37,10 +37,10 @@ MAC_HASH_SALT = ""
 ALLOW_EMPTY_SALT_FOR_DEV = False
 
 # -----------------------------------------------
-# 送信先 API（管理用Vercel）
+# 送信先 API（BPS-admin）
 # -----------------------------------------------
 
-API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
+API_ENDPOINT = "https://adac.saka2931.jp/api/booth/bluetooth"
 BLUETOOTH_SECRET = ""
 API_TIMEOUT_SECONDS = 10
 

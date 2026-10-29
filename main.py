@@ -2,8 +2,8 @@
 main.py
 BPSプロジェクト - エントリーポイント（v5対応）
 
-役割：Bluetoothスキャン → RSSIログ記録 → 重複排除 → 管理用Vercel API への送信
-※ 混雑レベルの計算はサーバー側（Vercel API Route）で実行されます。
+役割：Bluetoothスキャン → RSSIログ記録 → 重複排除 → BPS-admin の API への送信
+※ 混雑レベルの計算はサーバー側（BPS-admin の API）で実行されます。
 """
 
 import asyncio

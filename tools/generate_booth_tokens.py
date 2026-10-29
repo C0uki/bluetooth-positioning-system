@@ -3,7 +3,7 @@ tools/generate_booth_tokens.py
 ブースごとのランダムなAPIトークンを生成し、boothId→token のJSONマップを出力する。
 
 出力したJSONは2か所で同じものを使う:
-  1. サーバ（Vercel）の環境変数 BLUETOOTH_SECRET にそのまま設定（token↔booth束縛の検証用）
+  1. サーバ（BPS-admin）の環境変数 BLUETOOTH_SECRET にそのまま設定（token↔booth束縛の検証用）
   2. tools/generate_configs.py の --token-map に渡す（各Surfaceに自分のトークンだけ埋め込む）
 
 使い方:
@@ -45,7 +45,7 @@ def main():
     print(f"{len(tokens)} 個のトークンを {output} に生成しました。")
     print()
     print("次の手順:")
-    print(f"  1. このJSONの中身をサーバ（Vercel）の環境変数 BLUETOOTH_SECRET に設定")
+    print(f"  1. このJSONの中身をサーバ（BPS-admin）の環境変数 BLUETOOTH_SECRET に設定")
     print(f"  2. 配布生成時に --token-map {output} を指定")
     print()
     print("[重要] このファイルは秘密情報です。git にコミットせず、安全に保管してください。")
