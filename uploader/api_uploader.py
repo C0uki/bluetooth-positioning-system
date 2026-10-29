@@ -1,6 +1,6 @@
 """
 uploader/api_uploader.py
-管理用Vercel の API Route（/api/booth/bluetooth）へ
+BPS-admin の API（/api/booth/bluetooth）へ
 スキャン結果を POST するモジュール（企画書v5 §10.3 準拠）
 """
 
@@ -21,7 +21,7 @@ from config.settings import (
 
 def upload(mac_addresses: list[str], devices: list[dict] | None = None) -> bool:
     """
-    スキャン結果を Vercel API へ POST する
+    スキャン結果を BPS-admin の API へ POST する
 
     Args:
         mac_addresses: 重複排除済み擬似IDリスト

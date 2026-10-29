@@ -14,7 +14,7 @@ tools/generate_configs.py
 
   ※ --token-map と --token-file はどちらか一方を指定する。
   ※ booth_tokens.json は tools/generate_booth_tokens.py で生成でき、
-     同じJSONをサーバ（Vercel）の BLUETOOTH_SECRET 環境変数にも設定する。
+     同じJSONをサーバ（BPS-admin）の BLUETOOTH_SECRET 環境変数にも設定する。
 
 生成される構成:
   dist/
@@ -54,7 +54,7 @@ RSSI_THRESHOLD = {rssi_threshold}
 
 MAC_HASH_SALT = "{mac_salt}"
 
-API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
+API_ENDPOINT = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
 

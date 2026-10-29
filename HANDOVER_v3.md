@@ -6,7 +6,7 @@
 ---
 
 ## プロジェクト概要
-- **アプリ名**: BPS webapp（旧称: inusoポケット）
+- **アプリ名**: BPS webapp
 - **制作名**: BPSプロジェクト
 - **文化祭本番**: 2026年9月7日〜8日
 - **公開期間**: 2026年8月31日〜9月8日
@@ -16,7 +16,7 @@
 | 担当 | 範囲 |
 |---|---|
 | Couki（自分） | Bluetooth実装（Surface側スキャン・送信） |
-| Shoki（友人） | Web アプリ全体（閲覧用・管理用Vercel、API Route、混雑レベル算出ロジック） |
+| Shoki（友人） | Web アプリ全体（BPS-viewer・BPS-admin、API、混雑レベル算出ロジック） |
 
 **ツールの役割分担**
 - claude.ai: 設計相談・企画書/サマリー作成・意思決定
@@ -70,7 +70,7 @@ bluetooth-positioning-system/（Public）
 │   ├── mac_deduplicator.py  # MACアドレス重複排除
 │   └── congestion_calculator.py  # 【ローカル確認専用】参考実装
 ├── uploader/
-│   └── api_uploader.py      # Vercel API へPOST送信（混雑カウント）
+│   └── api_uploader.py      # BPS-admin の API へPOST送信（混雑カウント）
 ├── logger/
 │   └── rssi_logger.py       # RSSI値をCSVでローカル記録（バックアップ）
 └── tools/
@@ -111,7 +111,7 @@ bluetooth-positioning-system-data/（Private）
 
 ### API接続情報
 ```
-API_ENDPOINT = "https://inuso-admin.vercel.app/api/booth/bluetooth"
+API_ENDPOINT = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
 BLUETOOTH_SECRET = "<Privateリポジトリ credentials/api_token.txt を参照（ここには平文で書かない）>"
 認証方式: Authorization: Bearer <token>
 ```
@@ -130,7 +130,7 @@ Surface端末が main.py を実行
   → END_TIME 経過後、ログをUSBにコピーしてローカル削除
 ```
 
-### データ送信形式（Surface → Vercel API）
+### データ送信形式（Surface → BPS-admin の API）
 ```json
 POST /api/booth/bluetooth
 {
@@ -154,7 +154,7 @@ SCAN_DURATION_SECONDS = 10        # 1回のスキャン時間（秒）
 RSSI_THRESHOLD    = None          # 朝テストで実測（Noneならフィルタ無効）
 
 # ===== API設定 =====
-API_ENDPOINT      = "https://inuso-admin.vercel.app/api/booth/bluetooth"
+API_ENDPOINT      = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
 BLUETOOTH_SECRET  = ""            # 起動時にGUIで入力 or 配布パッケージで埋め込み
 API_TIMEOUT_SECONDS = 10
 

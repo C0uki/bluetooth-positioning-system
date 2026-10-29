@@ -1,7 +1,7 @@
 # bluetooth-positioning-system
 
 BPS文化祭（2026-09-07）Bluetooth混雑検知システム — Surface側スキャン・送信コード。
-Couki担当。Webアプリ側（Vercel API・Firestore・画面）はShoki担当。
+Couki担当。Webアプリ側（BPS-admin の API・Firestore・画面）はShoki担当。
 
 ## 関連リポジトリ
 
@@ -37,7 +37,7 @@ python tools/generate_booth_tokens.py \
 |---|---|
 | `scanner/bluetooth_scanner.py` | BLEスキャン。MAC→ソルト付きSHA-256擬似IDに変換 |
 | `processor/mac_deduplicator.py` | 擬似IDの重複排除 |
-| `uploader/api_uploader.py` | Vercel API送信（Bearer認証・per-boothトークン） |
+| `uploader/api_uploader.py` | BPS-admin の API送信（Bearer認証・per-boothトークン） |
 | `logger/rssi_logger.py` | ローカルCSV記録（全件記録） |
 | `tools/generate_configs.py` | 教室別配布パッケージ生成（dist/に出力） |
 | `tools/generate_booth_tokens.py` | per-boothトークンJSON生成 |

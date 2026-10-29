@@ -26,7 +26,7 @@ _switched = False
 def preview_calculate(device_count: int) -> dict:
     """
     【ローカル確認専用】デバイス数から想定される混雑レベルを計算する。
-    本番の判定はサーバー側（Vercel API Route）で行われるため、
+    本番の判定はサーバー側（BPS-admin の API）で行われるため、
     ここでの結果はあくまで「動作確認の参考値」。
 
     Returns:

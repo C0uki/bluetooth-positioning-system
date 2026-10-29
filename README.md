@@ -9,7 +9,7 @@ Bluetooth を利用した混雑状況自動検知システム
 
 各ブースに設置した Surface 端末が、来場者のスマートフォンから発信される
 Bluetooth 信号を検知し、デバイス数をカウントします。
-検知結果は管理用 Vercel の API（`/api/booth/bluetooth`）に送信され、
+検知結果はBPS-admin の API（`/api/booth/bluetooth`、`https://adac.bps.saka2931.jp`）に送信され、
 混雑レベルの計算・Firestore への保存はサーバー側で行われます。
 
 > このプログラムは「センサー」としての役割に専念します。
@@ -33,12 +33,12 @@ Surface（各ブース・1台固定）
         │     RSSI・擬似IDをローカル CSV に記録（全件記録）
         └── uploader/
               └── api_uploader.py
-              │     管理用Vercel API への POST 送信（Bearer 認証・per-booth トークン）
+              │     BPS-admin の API への POST 送信（Bearer 認証・per-booth トークン）
               │           ↓
-              │     Vercel API Route（Shoki実装）
+              │     BPS-admin の API（Shoki実装）
               │           ├── 混雑レベル算出
               │           ├── Firestore booths コレクション更新
-              │           └── 閲覧用Vercelへ revalidation リクエスト
+              │           └── BPS-viewer のデータ配信 Worker（Cloudflare）へキャッシュ無効化リクエスト
 ```
 
 ---
@@ -136,7 +136,7 @@ python tools/generate_booth_tokens.py \
 | `main.py` | エントリポイント。スキャン・記録・送信のループを管理 |
 | `scanner/bluetooth_scanner.py` | BLE スキャン。MAC → ソルト付き SHA-256 擬似IDに変換 |
 | `processor/mac_deduplicator.py` | 擬似IDの重複排除 |
-| `uploader/api_uploader.py` | Vercel API 送信（Bearer 認証・per-booth トークン） |
+| `uploader/api_uploader.py` | BPS-admin の API 送信（Bearer 認証・per-booth トークン） |
 | `logger/rssi_logger.py` | ローカル CSV 記録（全件記録） |
 | `tools/generate_configs.py` | 教室別配布パッケージ生成（`dist/` に出力） |
 | `tools/generate_booth_tokens.py` | per-booth トークン JSON 生成 |
@@ -183,7 +183,7 @@ python tools/generate_booth_tokens.py \
 | 担当 | 内容 |
 |---|---|
 | Couki（[@C0uki](https://github.com/C0uki)） | Bluetooth 実装（Surface 側スキャン・送信） |
-| Shoki （[@sho29saka31](https://github.com/sho29saka31)）| Web アプリ全体（閲覧用・管理用 Vercel、API Route、混雑レベル算出ロジック） |
+| Shoki （[@sho29saka31](https://github.com/sho29saka31)）| Web アプリ全体（BPS-viewer・BPS-admin、API、混雑レベル算出ロジック） |
 
 ---
 
