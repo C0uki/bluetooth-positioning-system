@@ -25,7 +25,7 @@ Surface Go 2
 
 | 設定項目 | 値 | 設定場所 |
 |---|---|---|
-| API URL | `https://adac.saka2931.jp/api/booth/bluetooth` | `config/settings.py` の `API_ENDPOINT`（`tools/generate_configs.py` が配布パッケージに書き出す） |
+| API URL | `https://adac.bps.saka2931.jp/api/booth/bluetooth` | `config/settings.py` の `API_ENDPOINT`（`tools/generate_configs.py` が配布パッケージに書き出す） |
 | Bearer トークン | 各ブースの per-booth トークン（`booth_tokens.json` の `map[boothId]`） | `BLUETOOTH_SECRET`（配布パッケージに埋め込み） |
 | ブース ID | Firestore の `booths` コレクションのドキュメント ID | `BOOTH_ID` |
 
@@ -83,7 +83,7 @@ BPS-admin の環境変数 `BLUETOOTH_SECRET` に設定してください。
 ## 動作テスト（curl）
 
 ```bash
-curl -X POST https://adac.saka2931.jp/api/booth/bluetooth \
+curl -X POST https://adac.bps.saka2931.jp/api/booth/bluetooth \
   -H "Authorization: Bearer <そのブースのトークン>" \
   -H "Content-Type: application/json" \
   -d '{"boothId":"class1-1","deviceCount":10,"operatorId":"bt-class1-1"}'

@@ -9,7 +9,7 @@ Bluetooth を利用した混雑状況自動検知システム
 
 各ブースに設置した Surface 端末が、来場者のスマートフォンから発信される
 Bluetooth 信号を検知し、デバイス数をカウントします。
-検知結果はBPS-admin の API（`/api/booth/bluetooth`、`https://adac.saka2931.jp`）に送信され、
+検知結果はBPS-admin の API（`/api/booth/bluetooth`、`https://adac.bps.saka2931.jp`）に送信され、
 混雑レベルの計算・Firestore への保存はサーバー側で行われます。
 
 > このプログラムは「センサー」としての役割に専念します。
