@@ -126,7 +126,7 @@ Surface端末が main.py を実行
   → RSSIログをCSVに記録（将来の位置推定用）
   → POST /api/booth/bluetooth にBearer認証で送信
   → admin API が混雑レベル（1〜5）を算出してFirestoreを更新
-  → viewer側のISRキャッシュを無効化 → 混雑状況がリアルタイム反映
+  → viewer 側のデータ配信 Worker（Cloudflare）のキャッシュは、60秒ごとの更新では無効化せず、キャッシュの有効期限（約60秒）で混雑状況が反映される
   → END_TIME 経過後、ログをUSBにコピーしてローカル削除
 ```
 
@@ -189,7 +189,7 @@ LOG_DIR      = "logs"             # ローカルログ保存先
 
 ### 技術スタック
 - フロントエンド: Next.js (App Router) + TypeScript
-- ホスティング: Vercel × 2（閲覧用・管理用、別プロジェクト）
+- ホスティング: 閲覧用（viewer）は Cloudflare Workers（静的アセット）、管理用（admin）は Vercel。Firebase との通信は、別の Cloudflare Worker（`bps-site-data`）が担当
 - DB: Firebase Firestore（単一）
 - 通知: Firebase Cloud Messaging
 - 認証: Cookie自己申告制（Firebase Authは不使用）
