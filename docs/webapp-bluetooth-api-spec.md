@@ -15,8 +15,9 @@ Surface Go 2 のスキャナ（本リポジトリ）が BPS-admin に検知数�
 Surface Go 2
   └── bluetooth-positioning-system (Python)
        └── Bluetooth LE スキャン → 擬似ID化 → 重複排除
-            └── POST /api/booth/bluetooth（Bearer 認証）  → BPS-admin
-                 └── C-3 算出 → Firestore 更新 → BPS-viewer のキャッシュ無効化（手動更新時など）
+            └── POST /v1/ingest（Bearer 認証）  → データ配信 Worker（bps-site-data）
+                 └── 貯めて、1分ごとに一括で BPS-admin へ（INGEST_SECRET）
+                      └── C-3 算出 → Firestore 更新 → BPS-viewer のキャッシュ無効化（手動更新時など）
 ```
 
 ---
@@ -25,17 +26,17 @@ Surface Go 2
 
 | 設定項目 | 値 | 設定場所 |
 |---|---|---|
-| API URL | `https://adac.bps.saka2931.jp/api/booth/bluetooth` | `config/settings.py` の `API_ENDPOINT`（`tools/generate_configs.py` が配布パッケージに書き出す） |
+| API URL | `https://data.bps.saka2931.jp/v1/ingest` | `config/settings.py` の `API_ENDPOINT`（`tools/generate_configs.py` が配布パッケージに書き出す） |
 | Bearer トークン | 各ブースの per-booth トークン（`booth_tokens.json` の `map[boothId]`） | `BLUETOOTH_SECRET`（配布パッケージに埋め込み） |
 | ブース ID | Firestore の `booths` コレクションのドキュメント ID | `BOOTH_ID` |
 
 トークンは**ブースごとに異なる**方式です。`booth_tokens.json`（`{boothId: token}`）と**同じ内容**を、
-BPS-admin の環境変数 `BLUETOOTH_SECRET` に設定してください。
+データ配信 Worker（受信側）の `BLUETOOTH_SECRET`（admin の旧直接受信用の `BLUETOOTH_SECRET` と同じ形式）に設定してください。
 `tools/generate_booth_tokens.py` で生成し、`tools/generate_configs.py` で教室別の配布パッケージを作ります。
 
 ---
 
-## `POST /api/booth/bluetooth`
+## `POST /v1/ingest`
 
 **認証:** `Authorization: Bearer <そのブースのトークン>`
 
@@ -63,12 +64,15 @@ BPS-admin の環境変数 `BLUETOOTH_SECRET` に設定してください。
 
 | 状況 | ステータス | ボディ |
 |---|---|---|
-| 成功 | 200 | `{ "ok": true, "status": 3 }` |
-| 手動モードのためスキップ | 200 | `{ "ok": true, "skipped": true, "reason": "manual mode" }` |
-| ブース未登録 | 400 | `{ "error": "booth not found", "boothId": "class1-1" }` |
+| 受理（Worker が貯めた） | 200 | `{ "ok": true, "queued": true }` |
 | 必須項目の欠落・値が不正 | 400 | `{ "error": "boothId and deviceCount required" }` など |
 | 不正な JSON | 400 | `{ "error": "invalid JSON" }` |
 | 認証失敗（未設定・不一致・boothId 未登録） | 401 | `{ "error": "Unauthorized" }` |
+| ボディが大きすぎる（16 KB 超） | 413 | `{ "error": "payload too large" }` |
+
+> 受理は「Worker が貯めた」ことを表します。混雑レベルへの反映は、Worker が1分ごとに admin へ一括送信したあとです（最大約1分遅れ）。
+> ブース未登録・手動モードのスキップは、この時点では分かりません（admin 側で処理され、スキップされます）。
+> `macAddresses` と `devices` は Worker が保存も転送もしません（台数だけを使います）。
 
 ---
 
@@ -83,7 +87,7 @@ BPS-admin の環境変数 `BLUETOOTH_SECRET` に設定してください。
 ## 動作テスト（curl）
 
 ```bash
-curl -X POST https://adac.bps.saka2931.jp/api/booth/bluetooth \
+curl -X POST https://data.bps.saka2931.jp/v1/ingest \
   -H "Authorization: Bearer <そのブースのトークン>" \
   -H "Content-Type: application/json" \
   -d '{"boothId":"class1-1","deviceCount":10,"operatorId":"bt-class1-1"}'

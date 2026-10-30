@@ -40,7 +40,7 @@ python main.py
 Surfaceの実装を経由せず、API単体で疎通確認する場合:
 
 ```bash
-curl -X POST https://adac.bps.saka2931.jp/api/booth/bluetooth \
+curl -X POST https://data.bps.saka2931.jp/v1/ingest \
   -H "Authorization: Bearer <そのブースのトークン>" \
   -H "Content-Type: application/json" \
   -d '{"boothId":"class1-1","deviceCount":10,"operatorId":"bt-class1-1"}'

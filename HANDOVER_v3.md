@@ -102,7 +102,7 @@ bluetooth-positioning-system-data/（Private）
    - 方式は **方式2（boothId→token のJSONマップを env var に置く）** で確定。
    - Surface側は実装済み: `tools/generate_booth_tokens.py` でマップ生成 →
      `generate_configs.py --token-map` で各Surfaceに自分のトークンのみ埋め込み。
-   - 残: Shoki がサーバ `/api/booth/bluetooth` で「boothId に紐づくトークンと一致しなければ403」を実装し、
+   - 残: Shoki がサーバ `/v1/ingest` で「boothId に紐づくトークンと一致しなければ403」を実装し、
      同じJSONを env var `BLUETOOTH_SECRET` に設定。boothId は ASCII slug（`class1-1` 等）で全体統一。
 
 ---
@@ -111,7 +111,7 @@ bluetooth-positioning-system-data/（Private）
 
 ### API接続情報
 ```
-API_ENDPOINT = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
+API_ENDPOINT = "https://data.bps.saka2931.jp/v1/ingest"
 BLUETOOTH_SECRET = "<Privateリポジトリ credentials/api_token.txt を参照（ここには平文で書かない）>"
 認証方式: Authorization: Bearer <token>
 ```
@@ -124,7 +124,7 @@ Surface端末が main.py を実行
   → 起動時にBLUETOOTH_SECRETが空ならGUIダイアログでトークン入力
   → Bluetoothスキャン（60秒間隔）→ deviceCount をカウント
   → RSSIログをCSVに記録（将来の位置推定用）
-  → POST /api/booth/bluetooth にBearer認証で送信
+  → POST /v1/ingest にBearer認証で送信
   → admin API が混雑レベル（1〜5）を算出してFirestoreを更新
   → viewer 側のデータ配信 Worker（Cloudflare）のキャッシュは、60秒ごとの更新では無効化せず、キャッシュの有効期限（約60秒）で混雑状況が反映される
   → END_TIME 経過後、ログをUSBにコピーしてローカル削除
@@ -132,7 +132,7 @@ Surface端末が main.py を実行
 
 ### データ送信形式（Surface → BPS-admin の API）
 ```json
-POST /api/booth/bluetooth
+POST /v1/ingest
 {
   "boothId": "class-1-1",
   "deviceCount": 8,
@@ -154,7 +154,7 @@ SCAN_DURATION_SECONDS = 10        # 1回のスキャン時間（秒）
 RSSI_THRESHOLD    = None          # 朝テストで実測（Noneならフィルタ無効）
 
 # ===== API設定 =====
-API_ENDPOINT      = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
+API_ENDPOINT      = "https://data.bps.saka2931.jp/v1/ingest"
 BLUETOOTH_SECRET  = ""            # 起動時にGUIで入力 or 配布パッケージで埋め込み
 API_TIMEOUT_SECONDS = 10
 
