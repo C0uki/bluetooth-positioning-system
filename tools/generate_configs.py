@@ -54,7 +54,7 @@ RSSI_THRESHOLD = {rssi_threshold}
 
 MAC_HASH_SALT = "{mac_salt}"
 
-API_ENDPOINT = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
+API_ENDPOINT = "https://data.bps.saka2931.jp/v1/ingest"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
 
