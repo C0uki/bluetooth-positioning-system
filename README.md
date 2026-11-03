@@ -49,10 +49,10 @@ Surface（各ブース・1台固定）
 
 ```json
 {
-  "boothId": "class1-1",
+  "boothId": "0001",
   "deviceCount": 18,
   "macAddresses": ["a1b2c3d4e5f60001", "a1b2c3d4e5f60002"],
-  "operatorId": "bt-class1-1"
+  "operatorId": "bt-0001"
 }
 ```
 
@@ -65,15 +65,11 @@ Surface（各ブース・1台固定）
 
 ---
 
-## ブースID一覧（20件）
+## ブースID（0001〜0050）
 
 ```
-class1-1, class1-2, class1-3, class1-4,
-class2-1, class2-2, class2-3, class2-4,
-class3-1, class3-2, class3-3, class3-4,
-club-esports, club-art,
-eat-car-1, eat-car-2, eat-car-3, pta-bazaar,
-health, pe-gym
+0001, 0002, 0003, ... , 0050
+（4桁の通し番号。学校の構成に依存しません）
 ```
 
 ---

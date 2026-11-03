@@ -103,7 +103,7 @@ bluetooth-positioning-system-data/（Private）
    - Surface側は実装済み: `tools/generate_booth_tokens.py` でマップ生成 →
      `generate_configs.py --token-map` で各Surfaceに自分のトークンのみ埋め込み。
    - 残: Shoki がサーバ `/v1/ingest` で「boothId に紐づくトークンと一致しなければ403」を実装し、
-     同じJSONを env var `BLUETOOTH_SECRET` に設定。boothId は ASCII slug（`class1-1` 等）で全体統一。
+     同じJSONを env var `BLUETOOTH_SECRET` に設定。boothId は 0001〜0050 の通し番号で全体統一。
 
 ---
 

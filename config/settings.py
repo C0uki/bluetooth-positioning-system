@@ -7,7 +7,7 @@
 # このSurface の識別情報（教室ごとに異なる）
 # -----------------------------------------------
 
-BOOTH_ID = "class1-1"
+BOOTH_ID = "0001"
 OPERATOR_ID = f"bt-{BOOTH_ID}"
 END_TIME = "16:00"
 

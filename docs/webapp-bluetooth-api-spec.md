@@ -43,9 +43,9 @@ Surface Go 2
 **リクエスト:**
 ```json
 {
-  "boothId": "class1-1",
+  "boothId": "0001",
   "deviceCount": 12,
-  "operatorId": "bt-class1-1",
+  "operatorId": "bt-0001",
   "macAddresses": ["<擬似ID>", "..."]
 }
 ```
@@ -90,7 +90,7 @@ Surface Go 2
 curl -X POST https://data.bps.saka2931.jp/v1/ingest \
   -H "Authorization: Bearer <そのブースのトークン>" \
   -H "Content-Type: application/json" \
-  -d '{"boothId":"class1-1","deviceCount":10,"operatorId":"bt-class1-1"}'
+  -d '{"boothId":"0001","deviceCount":10,"operatorId":"bt-0001"}'
 ```
 
 期待レスポンス: `{"ok":true,"status":3}`
@@ -103,17 +103,11 @@ curl -X POST https://data.bps.saka2931.jp/v1/ingest \
 `booth_tokens.json` のキーも同じ boothId に揃えてください（不一致は 401）。
 
 ```
-class1-1, class1-2, class1-3, class1-4,
-class2-1, class2-2, class2-3, class2-4,
-class3-1, class3-2, class3-3, class3-4,
-club-esports, club-art,
-health, pe-gym,
-eat-car-1, eat-car-2, eat-car-3,
-pta-bazaar
+0001, 0002, 0003, ... , 0050
+（4桁の通し番号。学校の構成に依存しません）
 ```
 
-> eスポーツ部の ID は、BPS-admin 側のドキュメントでは `club-game` と書かれている箇所があります。
-> 実際の Firestore ドキュメント ID に合わせて、トークンマップのキーと送信 `boothId` を統一してください。
+> ブースID は 0001〜0050 の4桁の通し番号です。どの番号がどのブースかは、admin の DB 管理画面（ブース一覧）で決めます。
 
 ---
 
