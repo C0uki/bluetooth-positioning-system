@@ -111,7 +111,7 @@ bluetooth-positioning-system-data/（Private）
 
 ### API接続情報
 ```
-API_ENDPOINT = "https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest"
+API_ENDPOINT = "https://data.bps.saka2931.jp/v1/ingest"
 BLUETOOTH_SECRET = "<Privateリポジトリ credentials/api_token.txt を参照（ここには平文で書かない）>"
 認証方式: Authorization: Bearer <token>
 ```
@@ -154,7 +154,7 @@ SCAN_DURATION_SECONDS = 10        # 1回のスキャン時間（秒）
 RSSI_THRESHOLD    = None          # 朝テストで実測（Noneならフィルタ無効）
 
 # ===== API設定 =====
-API_ENDPOINT      = "https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest"
+API_ENDPOINT      = "https://data.bps.saka2931.jp/v1/ingest"
 BLUETOOTH_SECRET  = ""            # 起動時にGUIで入力 or 配布パッケージで埋め込み
 API_TIMEOUT_SECONDS = 10
 

@@ -9,7 +9,7 @@ Bluetooth を利用した混雑状況自動検知システム
 
 各ブースに設置した Surface 端末が、来場者のスマートフォンから発信される
 Bluetooth 信号を検知し、デバイス数をカウントします。
-検知結果はデータ配信 Worker の受信 API（`/v1/ingest`、`https://bps-data.<アカウントのサブドメイン>.workers.dev`）に送信されます。Worker が1分ごとにまとめて BPS-admin へ送り、
+検知結果はデータ配信 Worker の受信 API（`/v1/ingest`、`https://data.bps.saka2931.jp`）に送信されます。Worker が1分ごとにまとめて BPS-admin へ送り、
 混雑レベルの計算・Firestore への保存はサーバー側で行われます。
 
 > このプログラムは「センサー」としての役割に専念します。

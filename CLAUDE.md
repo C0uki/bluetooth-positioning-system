@@ -19,7 +19,7 @@ python main.py
 
 ```bash
 python tools/generate_configs.py \
-  --api-endpoint https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest \
+  --api-endpoint https://data.bps.saka2931.jp/v1/ingest \
   --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json
 
 # RSSI閾値を指定する場合（朝テスト後）

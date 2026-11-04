@@ -115,8 +115,8 @@ def main():
     parser.add_argument("--mac-salt", default=None,
                         help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
     parser.add_argument("--output-dir", default="dist", help="出力先ディレクトリ（デフォルト: dist）")
-    parser.add_argument("--api-endpoint", required=True,
-                        help="送信先（データ配信 Worker の受信API）。例: https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest")
+    parser.add_argument("--api-endpoint", default="https://data.bps.saka2931.jp/v1/ingest",
+                        help="送信先（データ配信 Worker の受信API）。既定: https://data.bps.saka2931.jp/v1/ingest")
     parser.add_argument("--extra", nargs="*", default=[],
                         help="追加のブースID（通常は不要。0001〜0050 以外を使う場合のみ）。--token-map使用時はマップにも同IDのトークンが必要")
     args = parser.parse_args()
