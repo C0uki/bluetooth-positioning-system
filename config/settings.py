@@ -40,7 +40,7 @@ ALLOW_EMPTY_SALT_FOR_DEV = False
 # 送信先 API（BPS-admin）
 # -----------------------------------------------
 
-API_ENDPOINT = "https://data.bps.saka2931.jp/v1/ingest"
+API_ENDPOINT = "https://bps-data.REPLACE.workers.dev/v1/ingest"
 BLUETOOTH_SECRET = ""
 API_TIMEOUT_SECONDS = 10
 

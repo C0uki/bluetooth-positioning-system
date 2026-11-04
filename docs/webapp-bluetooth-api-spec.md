@@ -26,7 +26,7 @@ Surface Go 2
 
 | 設定項目 | 値 | 設定場所 |
 |---|---|---|
-| API URL | `https://data.bps.saka2931.jp/v1/ingest` | `config/settings.py` の `API_ENDPOINT`（`tools/generate_configs.py` が配布パッケージに書き出す） |
+| API URL | `https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest` | `config/settings.py` の `API_ENDPOINT`（`tools/generate_configs.py` が配布パッケージに書き出す） |
 | Bearer トークン | 各ブースの per-booth トークン（`booth_tokens.json` の `map[boothId]`） | `BLUETOOTH_SECRET`（配布パッケージに埋め込み） |
 | ブース ID | Firestore の `booths` コレクションのドキュメント ID | `BOOTH_ID` |
 
@@ -87,7 +87,7 @@ Surface Go 2
 ## 動作テスト（curl）
 
 ```bash
-curl -X POST https://data.bps.saka2931.jp/v1/ingest \
+curl -X POST https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest \
   -H "Authorization: Bearer <そのブースのトークン>" \
   -H "Content-Type: application/json" \
   -d '{"boothId":"0001","deviceCount":10,"operatorId":"bt-0001"}'

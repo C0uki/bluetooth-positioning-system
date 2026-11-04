@@ -48,7 +48,7 @@ RSSI_THRESHOLD = {rssi_threshold}
 
 MAC_HASH_SALT = "{mac_salt}"
 
-API_ENDPOINT = "https://data.bps.saka2931.jp/v1/ingest"
+API_ENDPOINT = "{api_endpoint}"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
 
@@ -115,6 +115,8 @@ def main():
     parser.add_argument("--mac-salt", default=None,
                         help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
     parser.add_argument("--output-dir", default="dist", help="出力先ディレクトリ（デフォルト: dist）")
+    parser.add_argument("--api-endpoint", required=True,
+                        help="送信先（データ配信 Worker の受信API）。例: https://bps-data.<アカウントのサブドメイン>.workers.dev/v1/ingest")
     parser.add_argument("--extra", nargs="*", default=[],
                         help="追加のブースID（通常は不要。0001〜0050 以外を使う場合のみ）。--token-map使用時はマップにも同IDのトークンが必要")
     args = parser.parse_args()
@@ -166,6 +168,7 @@ def main():
             token=token_map[booth_id],
             rssi_threshold=rssi_value,
             mac_salt=mac_salt,
+            api_endpoint=args.api_endpoint,
         )
         (config_dir / "settings.py").write_text(settings, encoding="utf-8")
 
