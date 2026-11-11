@@ -19,6 +19,7 @@ python main.py
 
 ```bash
 python tools/generate_configs.py \
+  --api-endpoint https://data.bps.saka2931.jp/v1/ingest \
   --token-map ../bluetooth-positioning-system-data/credentials/booth_tokens.json
 
 # RSSI閾値を指定する場合（朝テスト後）
@@ -43,15 +44,11 @@ python tools/generate_booth_tokens.py \
 | `tools/generate_booth_tokens.py` | per-boothトークンJSON生成 |
 | `config/settings.py` | 設定ファイル（generate_configs.pyが教室ごとに書き換え） |
 
-## ブースID（18件・ASCII slug）
+## ブースID（0001〜0050の通し番号）
 
 ```
-class1-1, class1-2, class1-3, class1-4,
-class2-1, class2-2, class2-3, class2-4,
-class3-1, class3-2, class3-3, class3-4,
-club-esports, club-art,
-eat-car-1, eat-car-2, eat-car-3,
-pta-bazaar
+0001, 0002, 0003, ... , 0050
+（4桁の通し番号。学校の構成に依存しません）
 ```
 
 ## セキュリティ・プライバシー注意事項

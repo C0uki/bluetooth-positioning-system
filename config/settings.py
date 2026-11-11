@@ -7,7 +7,7 @@
 # このSurface の識別情報（教室ごとに異なる）
 # -----------------------------------------------
 
-BOOTH_ID = "class1-1"
+BOOTH_ID = "0001"
 OPERATOR_ID = f"bt-{BOOTH_ID}"
 END_TIME = "16:00"
 
@@ -40,7 +40,7 @@ ALLOW_EMPTY_SALT_FOR_DEV = False
 # 送信先 API（BPS-admin）
 # -----------------------------------------------
 
-API_ENDPOINT = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
+API_ENDPOINT = "https://data.bps.saka2931.jp/v1/ingest"
 BLUETOOTH_SECRET = ""
 API_TIMEOUT_SECONDS = 10
 

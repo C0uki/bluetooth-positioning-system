@@ -18,11 +18,11 @@ tools/generate_configs.py
 
 生成される構成:
   dist/
-    class1-1/
+    0001/
       main.py, start.bat, install.bat, requirements.txt
       config/settings.py（教室固有）
       scanner/, processor/, uploader/, logger/
-    class1-2/
+    0002/
       ...
 """
 
@@ -34,14 +34,8 @@ import shutil
 import sys
 from pathlib import Path
 
-BOOTH_IDS = [
-    "class1-1", "class1-2", "class1-3", "class1-4",
-    "class2-1", "class2-2", "class2-3", "class2-4",
-    "class3-1", "class3-2", "class3-3", "class3-4",
-    "club-esports", "club-art",
-    "eat-car-1", "eat-car-2", "eat-car-3", "pta-bazaar",
-    "health", "pe-gym",
-]
+# ブースID は 0001〜0050 の4桁の通し番号（学校の構成に依存しない）
+BOOTH_IDS = [f"{i:04d}" for i in range(1, 51)]
 
 SETTINGS_TEMPLATE = '''\
 BOOTH_ID = "{booth_id}"
@@ -54,7 +48,7 @@ RSSI_THRESHOLD = {rssi_threshold}
 
 MAC_HASH_SALT = "{mac_salt}"
 
-API_ENDPOINT = "https://adac.bps.saka2931.jp/api/booth/bluetooth"
+API_ENDPOINT = "{api_endpoint}"
 BLUETOOTH_SECRET = "{token}"
 API_TIMEOUT_SECONDS = 10
 
@@ -121,8 +115,10 @@ def main():
     parser.add_argument("--mac-salt", default=None,
                         help="MACハッシュ用ソルト（未指定時はランダム生成。再生成すると過去データと突合不可になるので記録すること）")
     parser.add_argument("--output-dir", default="dist", help="出力先ディレクトリ（デフォルト: dist）")
+    parser.add_argument("--api-endpoint", default="https://data.bps.saka2931.jp/v1/ingest",
+                        help="送信先（データ配信 Worker の受信API）。既定: https://data.bps.saka2931.jp/v1/ingest")
     parser.add_argument("--extra", nargs="*", default=[],
-                        help="追加のブースID（例: eat-car-4）。--token-map使用時はマップにも同IDのトークンが必要")
+                        help="追加のブースID（通常は不要。0001〜0050 以外を使う場合のみ）。--token-map使用時はマップにも同IDのトークンが必要")
     args = parser.parse_args()
 
     mac_salt = args.mac_salt if args.mac_salt else secrets.token_hex(16)
@@ -172,6 +168,7 @@ def main():
             token=token_map[booth_id],
             rssi_threshold=rssi_value,
             mac_salt=mac_salt,
+            api_endpoint=args.api_endpoint,
         )
         (config_dir / "settings.py").write_text(settings, encoding="utf-8")
 

@@ -1,6 +1,6 @@
 """
 uploader/api_uploader.py
-BPS-admin の API（/api/booth/bluetooth）へ
+データ配信 Worker の受信 API（/v1/ingest）へ
 スキャン結果を POST するモジュール（企画書v5 §10.3 準拠）
 """
 
