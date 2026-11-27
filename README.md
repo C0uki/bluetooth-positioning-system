@@ -51,7 +51,8 @@ Surface（各ブース・1台固定）
 {
   "boothId": "0001",
   "deviceCount": 18,
-  "operatorId": "bt-0001"
+  "operatorId": "bt-0001",
+  "devices": [["a1b2c3d4e5f60001", -58], ["a1b2c3d4e5f60002", -71]]
 }
 ```
 
@@ -60,8 +61,8 @@ Surface（各ブース・1台固定）
 | `boothId` | 設置ブースのID |
 | `deviceCount` | 重複排除済みデバイス数 |
 | `operatorId` | 固定文字列 `bt-{boothId}`（changeLogs 記録用） |
-
-擬似ID・RSSI は送信しません（端末内のローカル CSV にのみ記録）。
+| `devices` | `[擬似ID, RSSI]` の配列（RSSI の強い順）。擬似IDはソルト付き SHA-256 ハッシュ16文字 |
+| `devicesTruncated` | 送信上限（16KB）に収めるため `devices` を一部だけ送ったときに `true`。`deviceCount` は常に全台数 |
 
 ---
 

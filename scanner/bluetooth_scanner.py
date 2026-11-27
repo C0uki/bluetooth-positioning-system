@@ -59,5 +59,13 @@ def get_filtered_macs(scan_results: list[dict]) -> list[str]:
     return [r["mac_hash"] for r in scan_results if r["passed_filter"]]
 
 
+def get_filtered_results(scan_results: list[dict]) -> list[dict]:
+    """フィルタ通過したデバイスの {mac_hash, rssi} リストを返す"""
+    return [
+        {"mac_hash": r["mac_hash"], "rssi": r["rssi"]}
+        for r in scan_results if r["passed_filter"]
+    ]
+
+
 def _now() -> str:
     return datetime.now().strftime("%y/%m/%d/%H:%M:%S")
