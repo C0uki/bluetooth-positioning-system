@@ -77,9 +77,9 @@ COPY_ITEMS = [
     "logger",
 ]
 
-EXTRA_COPY = [
-    ("tools/rssi_demo.py", "rssi_demo.py"),
-]
+# 配布パッケージに追加でコピーするファイル（src, dest）。
+# tools/rssi_demo.py は生MACを CSV に保存するため、配布には含めない（docs/privacy.md）。
+EXTRA_COPY: list[tuple[str, str]] = []
 
 
 def _resolve_tokens(args, booth_ids: list[str]) -> dict:
@@ -103,6 +103,26 @@ def _resolve_tokens(args, booth_ids: list[str]) -> dict:
     if unused:
         print(f"[注意] --token-map に未使用のキーがあります（無視）: {', '.join(unused)}")
     return {bid: str(data[bid]).strip() for bid in booth_ids}
+
+
+def _ensure_safe_to_clear(output_dir: Path, booth_ids: list[str]) -> None:
+    """
+    出力先は生成前に丸ごと削除するため、以前このスクリプトが作った
+    dist（ブースIDのフォルダだけを含む）以外なら止める。
+    `--output-dir .` やホームを指定してリポジトリごと消すのを防ぐ。
+    """
+    if not output_dir.exists():
+        return
+    if not output_dir.is_dir():
+        sys.exit(f"エラー: 出力先がディレクトリではありません: {output_dir}")
+    unexpected = [p.name for p in output_dir.iterdir() if not (p.is_dir() and p.name in booth_ids)]
+    if unexpected:
+        shown = ", ".join(sorted(unexpected)[:5])
+        sys.exit(
+            f"エラー: 出力先 {output_dir.resolve()} にブースID以外のファイルがあるため削除しません"
+            f"（{shown}{' など' if len(unexpected) > 5 else ''}）。\n"
+            "空のフォルダか、以前生成した dist を指定してください。"
+        )
 
 
 def main():
@@ -138,6 +158,7 @@ def main():
                 if val and val.lower() != "none":
                     rssi_thresholds[bid] = int(val)
 
+    _ensure_safe_to_clear(output_dir, booth_ids)
     if output_dir.exists():
         shutil.rmtree(output_dir)
 

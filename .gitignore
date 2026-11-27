@@ -6,8 +6,15 @@ __pycache__/
 venv/
 .venv/
 
-# 機密データ（bluetooth-positioning-system-data で管理）
-../bluetooth-positioning-system-data/credentials/
+# 機密データ（bluetooth-positioning-system-data で管理。誤ってこのリポジトリに置いた場合の保険）
+credentials/
+booth_tokens.json
+api_token.txt
+
+# 実行ログ（擬似ID・RSSI を含む）と RSSI デモの出力（生MACを含む）
+logs/
+rssi_demo.csv
+rssi_data.csv
 
 # 配布用出力
 dist/

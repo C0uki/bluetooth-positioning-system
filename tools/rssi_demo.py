@@ -73,7 +73,7 @@ def save_csv(results: list[dict], path: Path) -> None:
 def main():
     parser = argparse.ArgumentParser(description="RSSI閾値決定用デモスクリプト")
     parser.add_argument("--duration", type=int, default=10, help="スキャン時間（秒）")
-    parser.add_argument("--loop", type=int, default=30, help="繰り返し間隔（秒）。0なら1回だけ実行（デフォルト: 30）")
+    parser.add_argument("--loop", type=int, default=0, help="繰り返し間隔（秒）。0なら1回だけ実行（デフォルト: 0）")
     parser.add_argument("--output", default="rssi_demo.csv", help="出力CSVパス")
     parser.add_argument(
         "--thresholds", nargs="+", type=int, default=[-50, -60, -70, -80],

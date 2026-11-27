@@ -51,7 +51,6 @@ Surface（各ブース・1台固定）
 {
   "boothId": "0001",
   "deviceCount": 18,
-  "macAddresses": ["a1b2c3d4e5f60001", "a1b2c3d4e5f60002"],
   "operatorId": "bt-0001"
 }
 ```
@@ -60,8 +59,9 @@ Surface（各ブース・1台固定）
 |---|---|
 | `boothId` | 設置ブースのID |
 | `deviceCount` | 重複排除済みデバイス数 |
-| `macAddresses` | 重複排除済み**擬似ID**（ソルト付き SHA-256 ハッシュ、16文字）のリスト |
 | `operatorId` | 固定文字列 `bt-{boothId}`（changeLogs 記録用） |
+
+擬似ID・RSSI は送信しません（端末内のローカル CSV にのみ記録）。
 
 ---
 
@@ -91,7 +91,7 @@ pip install -r requirements.txt
 `config/settings.py` を編集してください（通常は `generate_configs.py` が自動生成します）：
 
 - `BOOTH_ID`：設置ブースのID
-- `BLUETOOTH_SECRET`：API 認証トークン（Privateリポジトリで管理）
+- `BLUETOOTH_SECRET`：API 認証トークン（Privateリポジトリで管理）。**このリポジトリの `config/settings.py` には書かないでください**（公開リポジトリのため）。空のままなら起動時に入力を求められます
 - `MAC_HASH_SALT`：擬似ID生成用ソルト（配布パッケージ生成時に一括設定）
 - `RSSI_THRESHOLD`：RSSI フィルタ閾値（`None` でフィルタ無効）
 

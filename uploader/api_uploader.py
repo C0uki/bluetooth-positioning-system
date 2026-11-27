@@ -19,13 +19,17 @@ from config.settings import (
 )
 
 
-def upload(mac_addresses: list[str], devices: list[dict] | None = None) -> bool:
+def upload(mac_addresses: list[str]) -> bool:
     """
-    スキャン結果を BPS-admin の API へ POST する
+    スキャン結果（台数）を BPS-admin の API へ POST する
+
+    サーバー側は deviceCount しか使わないため、擬似ID・RSSI は送らない。
+    以前は全件をペイロードに載せており、約240台を超えると受信側の上限
+    （16KB）を超えて 413 になり、混雑時ほど送信が止まっていた。
+    台数だけなら台数に関係なくペイロードは100バイト程度に収まる。
 
     Args:
-        mac_addresses: 重複排除済み擬似IDリスト
-        devices: {mac_hash, rssi} のリスト（省略可）
+        mac_addresses: 重複排除済み擬似IDリスト（台数の算出にのみ使う）
 
     Returns:
         bool: 送信成功なら True、失敗なら False
@@ -33,11 +37,8 @@ def upload(mac_addresses: list[str], devices: list[dict] | None = None) -> bool:
     payload = {
         "boothId": BOOTH_ID,
         "deviceCount": len(mac_addresses),
-        "macAddresses": mac_addresses,
         "operatorId": OPERATOR_ID,
     }
-    if devices is not None:
-        payload["devices"] = devices
 
     headers = {
         "Content-Type": "application/json",

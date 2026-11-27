@@ -45,8 +45,7 @@ Surface Go 2
 {
   "boothId": "0001",
   "deviceCount": 12,
-  "operatorId": "bt-0001",
-  "macAddresses": ["<擬似ID>", "..."]
+  "operatorId": "bt-0001"
 }
 ```
 
@@ -55,10 +54,9 @@ Surface Go 2
 | `boothId` | string | ✅ | Firestore の `booths/{boothId}` ドキュメント ID |
 | `deviceCount` | number | ✅ | 検出したデバイス数（**JSON 数値型**。有限の非負数であること） |
 | `operatorId` | string | — | 変更ログに記録する送信元識別子。省略時は `bt-<boothId>` |
-| `macAddresses` | string[] | — | 擬似ID（ソルト付きハッシュ）。サーバー側は `deviceCount` のみ参照し、未使用 |
 
-> `uploader/api_uploader.py` は、このほかに `devices`（`{mac_hash, rssi}` の配列）も付けて送ります。サーバー側は参照しません。
-> 生の MAC アドレスは送信しません。
+> Surface 側は擬似ID・RSSI を送りません（以前は `macAddresses`・`devices` も送っていましたが、台数が多いと 16 KB 上限を超えて 413 になるため廃止）。
+> 生の MAC アドレスも送信しません。
 
 **レスポンス:**
 
@@ -72,7 +70,7 @@ Surface Go 2
 
 > 受理は「Worker が貯めた」ことを表します。混雑レベルへの反映は、Worker が1分ごとに admin へ一括送信したあとです（最大約1分遅れ）。
 > ブース未登録・手動モードのスキップは、この時点では分かりません（admin 側で処理され、スキップされます）。
-> `macAddresses` と `devices` は Worker が保存も転送もしません（台数だけを使います）。
+> 旧バージョンの Surface が `macAddresses`・`devices` を付けて送ってきても、Worker は保存も転送もしません（台数だけを使います）。
 
 ---
 
