@@ -19,25 +19,67 @@ from config.settings import (
 )
 
 
-def upload(mac_addresses: list[str], devices: list[dict] | None = None) -> bool:
+# 受信側（データ配信 Worker）はボディが 16KB を超えると 413 を返す。
+# 余裕を見てこの値を上限にし、超える分の devices は送らない。
+MAX_PAYLOAD_BYTES = 15 * 1024
+
+
+def _dumps(payload: dict) -> bytes:
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def build_payload(mac_addresses: list[str], devices: list[tuple[str, int]] | None = None) -> dict:
     """
-    スキャン結果を BPS-admin の API へ POST する
+    送信ペイロードを組み立てる。
 
-    Args:
-        mac_addresses: 重複排除済み擬似IDリスト
-        devices: {mac_hash, rssi} のリスト（省略可）
-
-    Returns:
-        bool: 送信成功なら True、失敗なら False
+    devices は [擬似ID, RSSI] の短い配列で送る（1台あたり約25バイト、約600台まで）。
+    以前は {"pseudoId": ..., "rssi": ...} と macAddresses を両方載せていたため、
+    約240台で 16KB を超えて 413 になり、混雑時ほど送信が止まっていた。
+    それでも上限を超える場合は RSSI の強い（近い）順に入るだけ送り、
+    devicesTruncated を true にする。deviceCount は常に全台数。
     """
     payload = {
         "boothId": BOOTH_ID,
         "deviceCount": len(mac_addresses),
-        "macAddresses": mac_addresses,
         "operatorId": OPERATOR_ID,
     }
-    if devices is not None:
-        payload["devices"] = devices
+    if devices is None:
+        return payload
+
+    rows = sorted(([pid, rssi] for pid, rssi in devices), key=lambda r: r[1], reverse=True)
+    payload["devices"] = rows
+    if len(_dumps(payload)) <= MAX_PAYLOAD_BYTES:
+        return payload
+
+    # 入る件数を二分探索で求める
+    lo, hi = 0, len(rows)
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        payload["devices"] = rows[:mid]
+        payload["devicesTruncated"] = True
+        if len(_dumps(payload)) <= MAX_PAYLOAD_BYTES:
+            lo = mid
+        else:
+            hi = mid - 1
+    payload["devices"] = rows[:lo]
+    payload["devicesTruncated"] = True
+    return payload
+
+
+def upload(mac_addresses: list[str], devices: list[tuple[str, int]] | None = None) -> bool:
+    """
+    スキャン結果を BPS-admin の API へ POST する
+
+    Args:
+        mac_addresses: 重複排除済み擬似IDリスト（台数の算出に使う）
+        devices: (擬似ID, RSSI) のリスト（省略可）
+
+    Returns:
+        bool: 送信成功なら True、失敗なら False
+    """
+    payload = build_payload(mac_addresses, devices)
+    if payload.get("devicesTruncated"):
+        print(f"[注意] 送信上限のため devices を {len(payload['devices'])}/{len(devices)} 台に絞りました（RSSIの強い順）")
 
     headers = {
         "Content-Type": "application/json",
@@ -49,7 +91,7 @@ def upload(mac_addresses: list[str], devices: list[dict] | None = None) -> bool:
     try:
         response = requests.post(
             API_ENDPOINT,
-            json=payload,
+            data=_dumps(payload),
             headers=headers,
             timeout=API_TIMEOUT_SECONDS,
         )
